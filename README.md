@@ -1,4 +1,4 @@
-# PeakFlow - Prédiction de Temps de Course
+# kairos 1 - Prédiction de Temps de Course
 
 PeakFlow est un outil de prédiction de temps de course qui utilise des données GPX et des modèles mathématiques pour estimer vos performances sur des parcours spécifiques. Il prend en compte le dénivelé du parcours et les conditions météorologiques pour fournir des prédictions précises.
 
