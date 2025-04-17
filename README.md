@@ -72,11 +72,3 @@ Le modèle de prédiction utilise un modèle de puissance critique pour estimer 
 1. **Modèle de puissance** : Utilise les records personnels pour modéliser la capacité de performance de l'athlète.
 2. **Ajustement au dénivelé** : Calcule l'impact du dénivelé sur la performance en utilisant le concept de GAP (Grade Adjusted Pace).
 3. **Ajustement météo** : Tient compte de la température, de l'humidité et du vent pour une prédiction plus précise.
-
-## Contribuer
-
-Les contributions sont les bienvenues ! N'hésitez pas à ouvrir une issue ou à soumettre une pull request pour améliorer le projet.
-
-## Licence
-
-Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus d'informations.
