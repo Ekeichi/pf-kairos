@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PEAKFLOW - Results</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Special+Gothic+Expanded+One&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  <style>
+    .results-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+      background-color: rgba(0, 0, 32, 0.9);
+      border: 1px dashed rgba(255, 255, 255, 0.5);
+    }
+    
+    .back-btn {
+      margin-bottom: 1rem;
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      text-decoration: none;
+      color: white;
+      border: 1px dashed rgba(255, 255, 255, 0.5);
+      font-size: 0.9rem;
+      text-transform: uppercase;
+    }
+    
+    .back-btn:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .results-section {
+      margin-bottom: 2rem;
+    }
+    
+    .results-section h2 {
+      font-size: 1.2rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.5);
+    }
+    
+    .time-display {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .time-card {
+      flex: 1;
+      min-width: 200px;
+      padding: 1rem;
+      background-color: rgba(255, 255, 255, 0.1);
+      border: 1px dashed rgba(255, 255, 255, 0.3);
+    }
+    
+    .time-card h3 {
+      margin-top: 0;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .time-value {
+      font-size: 1.8rem;
+      font-weight: bold;
+      margin: 0.5rem 0;
+    }
+    
+    .time-details {
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .graph-container {
+      margin-top: 2rem;
+      text-align: center;
+    }
+    
+    .graph-container img {
+      max-width: 100%;
+      height: auto;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .weather-details {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background-color: rgba(255, 255, 255, 0.1);
+      border: 1px dashed rgba(255, 255, 255, 0.3);
+    }
+    
+    .weather-details h3 {
+      margin-top: 0;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+    }
+    
+    .weather-data {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    
+    .weather-item {
+      flex: 1;
+      min-width: 120px;
+    }
+    
+    .weather-label {
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .weather-value {
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+    
+    .download-btn {
+      display: inline-block;
+      margin: 1.5rem 0;
+      padding: 0.9rem 1.8rem;
+      background-color: #FFFFFF;
+      color: #000020;
+      text-decoration: none;
+      font-weight: bold;
+      border-radius: 0px;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .download-btn:hover {
+      background-color: #DDDDDD;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav>
+      <ul>
+        <li><a class="active" href="/">KAIROS 1</a></li>
+        <li><a href="#">ABOUT</a></li>
+        <li><a href="#">SHOP</a></li>
+        <li><a href="#">...</a></li>
+      </ul>
+    </nav>
+
+    <div class="results-container">
+      <a href="/predict" class="back-btn">← Back to Prediction</a>
+      
+      <h1>Race Time Prediction Results</h1>
+      <p class="subtitle">ANALYSIS FOR {{ filename }}</p>
+      
+      <div class="results-section">
+        <h2>Predicted Times</h2>
+        
+        <div class="time-display">
+          <div class="time-card">
+            <h3>Base Time</h3>
+            <div class="time-value">{{ results.base_time_formatted }}</div>
+            <div class="time-details">Flat terrain prediction</div>
+          </div>
+          
+          <div class="time-card">
+            <h3>With Elevation</h3>
+            <div class="time-value">{{ results.time_with_elevation_formatted }}</div>
+            <div class="time-details">
+              Elevation adjustment: {{ results.elevation_adjustment_formatted }}
+            </div>
+          </div>
+          
+          {% if weather_data %}
+          <div class="time-card">
+            <h3>Final Prediction</h3>
+            <div class="time-value">{{ results.final_time_formatted }}</div>
+            <div class="time-details">
+              Weather adjustment: {{ results.weather_adjustment_formatted }}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+        
+        <div class="graph-container">
+          <img src="data:image/png;base64,{{ img_base64 }}" alt="Prediction Visualization">
+        </div>
+        
+        {% if weather_data %}
+        <div class="weather-details">
+          <h3>Weather Conditions</h3>
+          <div class="weather-data">
+            <div class="weather-item">
+              <div class="weather-label">Temperature</div>
+              <div class="weather-value">{{ weather_data.temperature }}°C</div>
+            </div>
+            <div class="weather-item">
+              <div class="weather-label">Humidity</div>
+              <div class="weather-value">{{ weather_data.humidity }}%</div>
+            </div>
+            <div class="weather-item">
+              <div class="weather-label">Wind Speed</div>
+              <div class="weather-value">{{ weather_data.wind_speed }} km/h</div>
+            </div>
+            <div class="weather-item">
+              <div class="weather-label">Wind Direction</div>
+              <div class="weather-value">{{ weather_data.wind_direction }}°</div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      
+      <a href="{{ url_for('download_results', filename=filename) }}" class="download-btn">Download Results</a>
+    </div>
+
+  </div>
+</body>
+</html>

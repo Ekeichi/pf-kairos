@@ -1,0 +1,204 @@
+/* General Resets and Body Styling */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Arial', sans-serif;
+  background-color: #000020;
+  color: #FFFFFF;
+  line-height: 1.6;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  position: relative; /* Needed for absolute positioning of overlay */
+}
+
+/* Navigation */
+nav {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.5);
+  flex-shrink: 0;
+  text-align: center;
+  position: relative; /* Ensure nav stays in flow but allows z-index */
+  z-index: 5; /* Make sure nav is potentially below overlay */
+}
+
+nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: inline-flex;
+  gap: 2rem;
+}
+
+nav a {
+  text-decoration: none;
+  color: #FFFFFF;
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding-bottom: 5px;
+}
+
+nav a.active {
+  border-bottom: 1px dashed #FFFFFF;
+}
+
+nav a:hover {
+  color: #CCCCCC;
+}
+
+/* Main Content Area - Split Screen */
+main {
+  display: flex;
+  flex-grow: 1;
+  overflow: hidden;
+  position: relative; /* To establish stacking context if needed */
+  z-index: 1; /* Keep main content below overlay */
+}
+
+/* Left Section Styling */
+.left-section {
+  width: 50%;
+  padding: 3rem 4rem;
+  box-sizing: border-box;
+  overflow-y: auto;
+  background-color: #000020; /* Explicitly set background */
+}
+
+.subtitle {
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.desc, .bottom-text {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  max-width: 85%;
+  margin-bottom: 1.5rem;
+}
+
+.available {
+  margin-top: 2.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+
+.links {
+  padding-left: 0;
+  list-style: none;
+  font-size: 0.95rem;
+  line-height: 1.8;
+  margin-bottom: 2rem;
+}
+
+.links li::before {
+    content: "—";
+    margin-right: 0.8em;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.links a {
+  color: #FFFFFF;
+  text-decoration: none;
+}
+.links a:hover {
+  text-decoration: underline;
+}
+
+.btn {
+  display: inline-block;
+  margin: 1.5rem 0;
+  padding: 0.9rem 1.8rem;
+  background-color: #FFFFFF;
+  color: #000020;
+  text-decoration: none;
+  font-weight: bold;
+  border-radius: 0px;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+}
+
+.btn:hover {
+    background-color: #DDDDDD;
+}
+
+/* Right Section Styling - Background Image ONLY */
+.right-section {
+  width: 50%;
+  position: relative;
+  background-image: url('assets/image.png'); /* YOUR IMAGE */
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  /* Removed display:flex etc. - no longer centering content inside */
+}
+
+/* Title Overlay - Center of the PAGE */
+.title-overlay {
+  position: absolute; /* Position relative to nearest positioned ancestor (.container) */
+  top: 50%;           /* Move top edge to vertical center */
+  left: 50%;          /* Move left edge to horizontal center */
+  transform: translate(-50%, -50%); /* Shift back by half its own width/height */
+  text-align: center;
+  color: white;
+  width: auto; /* Let width be determined by content */
+  max-width: 90%; /* Prevent it getting too wide on large screens */
+  z-index: 10; /* Ensure it's above main content and nav */
+}
+
+.presents {
+  font-family: 'Special Gothic Expanded One', sans-serif; /* Use the new font */
+  font-size: 1rem;
+  font-weight: 400; /* This font only has weight 400 */
+  letter-spacing: 0.1em;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.title-overlay h1 {
+  font-family: 'Special Gothic Expanded One', sans-serif; /* Use the new font */
+  /* font-family: 'Orbitron', sans-serif; */ /* Remove or comment out the old font */
+  font-size: 4.5rem; /* You might need to adjust size/letter-spacing */
+  margin: 0;
+  letter-spacing: 2px; /* Adjust spacing if needed for the new font */
+  font-weight: 400; /* This font only has weight 400 */
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+/* Optional: Add basic responsiveness */
+@media (max-width: 768px) {
+  main {
+    flex-direction: column;
+  }
+  .left-section, .right-section {
+    width: 100%;
+    min-height: 50vh;
+  }
+  .left-section {
+     padding: 2rem;
+     overflow-y: visible;
+  }
+   .right-section {
+     min-height: 300px;
+   }
+   /* Adjust overlay font size on smaller screens too */
+  .title-overlay h1 {
+      font-size: 3rem;
+  }
+   .presents {
+       font-size: 0.8rem;
+   }
+}
