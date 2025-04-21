@@ -197,9 +197,8 @@
   <div class="container">
     <nav>
       <ul>
-        <li><a class="active" href="/">KAIROS 1</a></li>
-        <li><a href="#">ABOUT</a></li>
-        <li><a href="#">SHOP</a></li>
+        <li><a href="/">KAIROS 1</a></li>
+        <li><a href="/about">ABOUT</a></li>
         <li><a href="#">...</a></li>
       </ul>
     </nav>
@@ -216,60 +215,14 @@
         <div class="form-section">
           <h2>Personal Records (Optional)</h2>
           
-          <!-- Option de connexion Strava -->
-          <div class="strava-section">
-            {% if strava_connected %}
-              <p class="strava-status connected">✓ Connected to Strava</p>
-              
-              {% if strava_records %}
-                <div class="strava-records">
-                  <div>
-                    <input type="checkbox" id="use_strava_records" name="use_strava_records" checked>
-                    <label for="use_strava_records">Use my Strava records</label>
-                  </div>
-                  
-                  <div class="records-table">
-                    <h3>Your Strava Records</h3>
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>Distance</th>
-                          <th>Time</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {% for distance, time in strava_records.items() %}
-                        <tr>
-                          <td>{{ distance }}</td>
-                          <td>{{ time }}</td>
-                        </tr>
-                        {% endfor %}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              {% else %}
-                <p class="strava-status warning">No personal records found in your Strava account</p>
-              {% endif %}
-              
-              <div class="strava-actions">
-                <a href="{{ url_for('strava.logout') }}" class="strava-btn logout">Disconnect from Strava</a>
-              </div>
-            {% else %}
-              <p class="strava-message">Connect to Strava to use your personal records automatically:</p>
-              <a href="{{ url_for('strava.login') }}" class="strava-btn connect">
-                <img src="https://developers.strava.com/images/btn_strava_connectwith_orange.png" alt="Connect with Strava">
-              </a>
-            {% endif %}
-          </div>
           
           <div class="manual-records-section">
             <div>
-              <input type="checkbox" id="enable_custom_records" name="enable_custom_records" {% if not strava_connected %}checked{% endif %}>
+              <input type="checkbox" id="enable_custom_records" name="enable_custom_records" checked>
               <label for="enable_custom_records">Enter my records manually</label>
             </div>
             
-            <div class="record-inputs" id="recordInputs" {% if not strava_connected %}class="show"{% endif %}>
+            <div class="record-inputs show" id="recordInputs">
               <p>Enter at least 3 personal records for better prediction accuracy.</p>
               <div class="record-row">
                 <input type="text" name="distance_0" placeholder="Distance (e.g. 5km)">
@@ -353,28 +306,8 @@
         recordsCheckbox.addEventListener('change', function() {
           if (this.checked) {
             recordInputs.classList.add('show');
-            
-            // Décocher l'utilisation des records Strava si cochée
-            const stravaRecordsCheckbox = document.getElementById('use_strava_records');
-            if (stravaRecordsCheckbox && stravaRecordsCheckbox.checked) {
-              stravaRecordsCheckbox.checked = false;
-            }
           } else {
             recordInputs.classList.remove('show');
-          }
-        });
-      }
-      
-      // Gérer l'option des records Strava
-      const stravaRecordsCheckbox = document.getElementById('use_strava_records');
-      if (stravaRecordsCheckbox) {
-        stravaRecordsCheckbox.addEventListener('change', function() {
-          if (this.checked) {
-            // Décocher l'utilisation des records manuels si cochée
-            if (recordsCheckbox && recordsCheckbox.checked) {
-              recordsCheckbox.checked = false;
-              recordInputs.classList.remove('show');
-            }
           }
         });
       }

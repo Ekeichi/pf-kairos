@@ -14,7 +14,6 @@ import power_model_time
 import influence_Den
 import weather
 import web_predictor
-from strava_auth import strava_bp, get_athlete_records
 
 # Configuration
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
@@ -25,8 +24,6 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Max 16 MB
 app.secret_key = "peakflow_secret_key"
 
-# Enregistrer le blueprint Strava
-app.register_blueprint(strava_bp)
 
 # Créer le dossier uploads s'il n'existe pas
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -40,15 +37,11 @@ def index():
 
 @app.route('/predict')
 def predict():
-    strava_connected = 'strava_athlete_id' in session
-    records = None
+    return render_template('predict.html')
     
-    # Si l'utilisateur est connecté à Strava, récupérer ses records
-    if strava_connected:
-        athlete_id = session['strava_athlete_id']
-        records = get_athlete_records(athlete_id)
-    
-    return render_template('predict.html', strava_connected=strava_connected, strava_records=records)
+@app.route('/about')
+def about():
+    return render_template('about.html')
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -82,12 +75,6 @@ def upload_file():
                     if distance and time:
                         records[distance] = time
         
-        # Option 2: Records Strava (priorité sur les records manuels)
-        elif 'use_strava_records' in request.form and 'strava_athlete_id' in session:
-            athlete_id = session['strava_athlete_id']
-            strava_records = get_athlete_records(athlete_id)
-            if strava_records:
-                records = strava_records
         
         # Récupérer les données météo
         use_weather = 'use_weather' in request.form
@@ -162,4 +149,4 @@ def download_results(filename):
         return redirect(url_for('predict'))
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5002, debug=True)
+    app.run(host='0.0.0.0', port=8080, debug=True)

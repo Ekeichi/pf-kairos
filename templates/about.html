@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Learn more about PEAKFLOW, our mission, and technology. Discover how we're revolutionizing running performance."/>
+  <title>PEAKFLOW - About</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Special+Gothic+Expanded+One&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  <style>
+    .about-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+      background-color: rgba(0, 0, 32, 0.9);
+      border: 1px dashed rgba(255, 255, 255, 0.5);
+    }
+    
+    .about-section {
+      margin-bottom: 2rem;
+    }
+    
+    .about-section h2 {
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .about-section p {
+      margin-bottom: 1rem;
+      line-height: 1.6;
+    }
+    
+    .back-btn {
+      margin-bottom: 1rem;
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      text-decoration: none;
+      color: white;
+      border: 1px dashed rgba(255, 255, 255, 0.5);
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      transition: background-color 0.3s ease;
+    }
+    
+    .back-btn:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    footer {
+      text-align: center;
+      padding: 1rem;
+      background-color: rgba(0, 0, 32, 0.9);
+      color: white;
+      font-size: 0.8rem;
+    }
+    
+    @media (max-width: 600px) {
+      .about-container {
+        padding: 1rem;
+      }
+      
+      .about-section h2 {
+        font-size: 1.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav aria-label="Main navigation">
+      <ul>
+        <li><a href="/">KAIROS 1</a></li>
+        <li><a class="active" href="/about">ABOUT</a></li>
+        <li><a href="#">...</a></li>
+      </ul>
+    </nav>
+
+    <div class="about-container">
+      <a href="/" class="back-btn">← Back to Home</a>
+      <h1>About PEAKFLOW</h1>
+      
+      <div class="about-section">
+        <h2>Our Mission</h2>
+        <p>
+          At PeakFlow, we are dedicated to revolutionizing running performance through cutting-edge technology and data science. Our mission is to provide runners of all levels with sophisticated tools that were once only available to serious athletes.
+        </p>
+        <p>
+          Kairos 1 represents our first major step in this journey - a precision tool designed to optimize pacing strategies and fuel planning for maximum performance during races.
+        </p>
+      </div>
+      
+      <div class="about-section">
+        <h2>The Technology</h2>
+        <p>
+          Based on research from <a href="https://arxiv.org/abs/1807.10595">this arXiv paper</a>, we analyze your running data to create a personalized model of your unique running profile. By combining this with detailed course information and optional weather data, we can predict optimal pacing strategies that account for terrain, elevation changes, and your personal strengths and weaknesses.
+        </p>
+        <p>
+          We're constantly refining our models based on performance data and feedback from our user community to ensure the most accurate and useful predictions possible.
+        </p>
+      </div>
+      
+      <div class="about-section">
+        <h2>Contact Us</h2>
+        <p>
+          We're always looking to improve and expand our tools. If you have feedback, questions, or ideas, please reach out to us at <a href="mailto:peakflow.corp@gmail.com">peakflow.corp@gmail.com</a>.
+        </p>
+      </div>
+    </div>
+  </div>
+  <footer>
+    <p>© 2023 PEAKFLOW. All rights reserved.</p>
+  </footer>
+</body>
+</html>
