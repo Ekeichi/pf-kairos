@@ -99,18 +99,46 @@ def create_slope_segments(slopes: List[float]) -> List[List[int]]:
     segments.append(current_segment)
     return segments
 
-def get_speed_adjustment_factor(slope: float) -> float:
-    """Estimates speed adjustment factor based on slope."""
+def get_speed_adjustment_factor(slope: float, runner_type: str = 'balanced') -> float:
+    """Estimates speed adjustment factor based on slope and runner profile.
+    
+    Args:
+        slope: The slope percentage (positive = uphill, negative = downhill)
+        runner_type: The runner's profile ('uphill', 'downhill', 'balanced')
+        
+    Returns:
+        Factor to adjust speed (< 1 for slower, > 1 for faster)
+    """
+    # Base adjustment factors
     if slope > 0:  # Uphill
-        return 1 - (slope / 100) * (0.215 + 0.0057 * slope)
+        # Improved uphill formula with better handling of steep slopes
+        factor = 1 - (slope / 100) * (0.215 + 0.0057 * slope)
+        # Apply exponential penalty for very steep hills (>15%)
+        if slope > 15:
+            factor -= 0.015 * (slope - 15)**1.5 / 100
     elif slope < 0:  # Downhill
         abs_slope = abs(slope)
         if abs_slope <= 10:
-            return 1 + (min(abs_slope, MAX_DOWNHILL_BONUS) / 100) * 0.13
-        elif abs_slope > 10:
-            return 1 + (MAX_DOWNHILL_BONUS / 100) * 0.13 - ((abs_slope - 10) / 100) * 0.05
+            factor = 1 + (min(abs_slope, MAX_DOWNHILL_BONUS) / 100) * 0.13
+        else:  # Steeper downhill
+            # More gradual transition for steep downhills
+            factor = 1 + (MAX_DOWNHILL_BONUS / 100) * 0.13 - ((abs_slope - 10) / 100) * 0.05
+            # Additional penalty for very steep downhills (>20%) as they require more braking
+            if abs_slope > 20:
+                factor -= 0.01 * (abs_slope - 20)**1.2 / 100
     else:  # Flat
-        return 1.0
+        factor = 1.0
+    
+    # Adjust based on runner profile
+    if runner_type == 'uphill' and slope > 0:
+        # Uphill specialists lose less speed on climbs
+        factor += 0.05 * min(slope, 15) / 100
+    elif runner_type == 'downhill' and slope < 0:
+        # Downhill specialists gain more speed on descents
+        factor += 0.04 * min(abs(slope), 20) / 100
+    
+    # Ensure factor doesn't go below reasonable minimum
+    return max(factor, 0.4)
 
 def calculate_gnr_gap(points: List[TrackPoint], flat_pace_kmh: float = BASELINE_SPEED_KMH) -> dict:
     """Calcule l'indice GNR-GAP selon la méthodologie Go&Race"""

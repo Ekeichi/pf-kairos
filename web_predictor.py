@@ -155,15 +155,36 @@ def visualize_results_web(results: Dict[str, Any], gpx_file_path: str, save_to=N
     # Ajouter une valeur au début pour aligner avec les distances
     adjusted_paces = np.insert(adjusted_speeds, 0, flat_pace_min_per_km)
     
-    # Calculer le temps par kilomètre
+    # Calculer le temps par kilomètre avec fatigue progressive
+    # Récupérer le temps total estimé en minutes
+    total_time_min = results["time_with_elevation_s"] / 60
+    total_distance = distance_km
+    
+    # Facteur de fatigue: augmente avec la distance parcourue
+    def fatigue_factor(km_number, total_km):
+        # Commence à augmenter significativement après 60% de la course
+        race_completion = km_number / total_km
+        if race_completion < 0.6:
+            return 1.0
+        elif race_completion < 0.8:
+            # Augmentation modérée
+            return 1.0 + 0.03 * ((race_completion - 0.6) / 0.2)
+        else:
+            # Augmentation plus forte dans les derniers km
+            return 1.03 + 0.07 * ((race_completion - 0.8) / 0.2)
+    
     for km in range(int(distance_km)):
         # Trouver tous les indices des points dans ce km
         indices = np.where((distances_km >= km) & (distances_km < (km + 1)))[0]
         if len(indices) > 0:
             # Calculer l'allure moyenne pour ce km (min/km)
             km_pace = np.mean(adjusted_paces[indices])
+            
+            # Appliquer le facteur de fatigue progressive
+            km_pace_with_fatigue = km_pace * fatigue_factor(km+1, total_distance)
+            
             # Convertir l'allure en temps pour ce km (minutes)
-            km_time = km_pace  # Puisque l'allure est en min/km et on regarde 1 km
+            km_time = km_pace_with_fatigue
             km_times.append(km_time)
             km_numbers.append(km + 1)  # Commencer à km 1 plutôt que km 0
     
