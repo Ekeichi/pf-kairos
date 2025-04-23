@@ -130,24 +130,6 @@ def visualize_results_web(results: Dict[str, Any], gpx_file_path: str, save_to=N
     baseline_speed_kmh = (3600 / results["base_time_s"]) * distance_km
     flat_pace_min_per_km = 60 / baseline_speed_kmh  # min/km
     
-    # Créer une figure avec 2 sous-graphiques
-    plt.figure(figsize=(14, 10))
-    
-    # Graphique 1: Profil d'élévation
-    plt.subplot(2, 1, 1)
-    plt.plot(distances_km, elevations)
-    plt.xlabel("Distance (km)")
-    plt.ylabel("Altitude (m)")
-    plt.title("Profil d'élévation")
-    plt.grid(True)
-    
-    # Graphique 2: Temps par kilomètre
-    plt.subplot(2, 1, 2)
-    
-    # Calculer le temps prédit pour chaque kilomètre
-    km_times = []  # Temps en minutes pour chaque km
-    km_numbers = []  # Numéro du kilomètre
-    
     # Utiliser les calculs d'influence_Den pour les paces ajustés
     adjusted_speeds = np.array([flat_pace_min_per_km / influence_Den.get_speed_adjustment_factor(slope) 
                                for slope in slopes])
@@ -173,6 +155,10 @@ def visualize_results_web(results: Dict[str, Any], gpx_file_path: str, save_to=N
             # Augmentation plus forte dans les derniers km
             return 1.03 + 0.07 * ((race_completion - 0.8) / 0.2)
     
+    # Calculer le temps prédit pour chaque kilomètre
+    km_times = []  # Temps en minutes pour chaque km
+    km_numbers = []  # Numéro du kilomètre
+    
     for km in range(int(distance_km)):
         # Trouver tous les indices des points dans ce km
         indices = np.where((distances_km >= km) & (distances_km < (km + 1)))[0]
@@ -188,67 +174,112 @@ def visualize_results_web(results: Dict[str, Any], gpx_file_path: str, save_to=N
             km_times.append(km_time)
             km_numbers.append(km + 1)  # Commencer à km 1 plutôt que km 0
     
-    # Créer des espaces entre les barres pour une meilleure lisibilité
-    bar_width = 0.35
-    
-    # Créer les barres pour le temps par km avec dénivelé
-    bars = plt.bar(km_numbers, km_times, width=bar_width, 
-             color='blue', alpha=0.7, label="Temps par km (avec dénivelé)")
-    
     # Calculer les temps ajustés avec météo si disponible
+    weather_times = []
     if "weather_adjustment_s" in results:
         weather_factor = 1 + (results["weather_adjustment_s"] / results["time_with_elevation_s"])
         weather_times = [time * weather_factor for time in km_times]
-        
-        # Créer les barres pour le temps par km avec météo
-        weather_bars = plt.bar(np.array(km_numbers) + bar_width, weather_times, width=bar_width,
-                        color='red', alpha=0.7, label="Temps par km (avec météo)")
     
-    # Ajouter une ligne horizontale pour le temps moyen par km
+    # Calculer l'allure moyenne
     avg_pace = (results["time_with_elevation_s"] / 60) / distance_km
-    plt.axhline(y=avg_pace, color='blue', linestyle='--', 
-                label=f"Temps moyen: {int(avg_pace)}'{int((avg_pace-int(avg_pace))*60):02}\" /km")
-    
+    avg_pace_weather = 0
     if "weather_adjustment_s" in results:
         avg_pace_weather = (results["final_time_s"] / 60) / distance_km
-        plt.axhline(y=avg_pace_weather, color='red', linestyle='--', 
-                    label=f"Temps moyen avec météo: {int(avg_pace_weather)}'{int((avg_pace_weather-int(avg_pace_weather))*60):02}\" /km")
     
-    # Ajouter des étiquettes de temps sur chaque barre
-    for i, bar in enumerate(bars):
-        height = bar.get_height()
-        minutes = int(height)
-        seconds = int((height - minutes) * 60)
-        plt.text(bar.get_x() + bar.get_width()/2., height + 0.1,
-                f"{minutes}'{seconds:02}\"",
-                ha='center', va='bottom', fontsize=9)
+    # Réduire la résolution des données pour rendre le fichier JSON plus léger
+    # Pour les données d'élévation, échantillonner environ 1 point tous les 100 mètres
+    sample_rate = max(1, len(distances_km) // 300)  # Limiter à environ 300 points
     
-    if "weather_adjustment_s" in results:
-        for i, bar in enumerate(weather_bars):
+    sampled_distances = [distances_km[i] for i in range(0, len(distances_km), sample_rate)]
+    sampled_elevations = [elevations[i] for i in range(0, len(elevations), sample_rate)]
+    
+    # Créer un dictionnaire avec les données pour Plotly
+    plot_data = {
+        "filename": os.path.basename(gpx_file_path),
+        "distances_km": sampled_distances,
+        "elevations": sampled_elevations,
+        "flat_pace_min_per_km": float(flat_pace_min_per_km),
+        "adjusted_paces_min_per_km": adjusted_speeds.tolist(),
+        "km_numbers": km_numbers,
+        "km_times": km_times,
+        "weather_times": weather_times,
+        "avg_pace": float(avg_pace),
+        "avg_pace_weather": float(avg_pace_weather),
+        "has_weather": "weather_adjustment_s" in results
+    }
+    
+    # Sauvegarder les données pour Plotly
+    plot_data_path = os.path.join(os.path.dirname(gpx_file_path), f"plot_data_{os.path.basename(gpx_file_path)}.json")
+    with open(plot_data_path, 'w') as f:
+        json.dump(plot_data, f, indent=2)
+    
+    # Si on a besoin d'une image pour PDF ou pour compatibilité, générer avec matplotlib
+    if save_to:
+        # Créer une figure avec 2 sous-graphiques
+        plt.figure(figsize=(14, 10))
+        
+        # Graphique 1: Profil d'élévation
+        plt.subplot(2, 1, 1)
+        plt.plot(distances_km, elevations)
+        plt.xlabel("Distance (km)")
+        plt.ylabel("Altitude (m)")
+        plt.title("Profil d'élévation")
+        plt.grid(True)
+        
+        # Graphique 2: Temps par kilomètre
+        plt.subplot(2, 1, 2)
+        
+        # Créer des espaces entre les barres pour une meilleure lisibilité
+        bar_width = 0.35
+        
+        # Créer les barres pour le temps par km avec dénivelé
+        bars = plt.bar(km_numbers, km_times, width=bar_width, 
+                 color='blue', alpha=0.7, label="Temps par km (avec dénivelé)")
+        
+        if weather_times:
+            # Créer les barres pour le temps par km avec météo
+            weather_bars = plt.bar(np.array(km_numbers) + bar_width, weather_times, width=bar_width,
+                            color='red', alpha=0.7, label="Temps par km (avec météo)")
+        
+        # Ajouter une ligne horizontale pour le temps moyen par km
+        plt.axhline(y=avg_pace, color='blue', linestyle='--', 
+                    label=f"Temps moyen: {int(avg_pace)}'{int((avg_pace-int(avg_pace))*60):02}\" /km")
+        
+        if "weather_adjustment_s" in results:
+            plt.axhline(y=avg_pace_weather, color='red', linestyle='--', 
+                        label=f"Temps moyen avec météo: {int(avg_pace_weather)}'{int((avg_pace_weather-int(avg_pace_weather))*60):02}\" /km")
+        
+        # Ajouter des étiquettes de temps sur chaque barre
+        for i, bar in enumerate(bars):
             height = bar.get_height()
             minutes = int(height)
             seconds = int((height - minutes) * 60)
             plt.text(bar.get_x() + bar.get_width()/2., height + 0.1,
                     f"{minutes}'{seconds:02}\"",
-                    ha='center', va='bottom', fontsize=9, color='darkred')
-    
-    # Configurer le graphique
-    plt.xlabel("Kilomètre")
-    plt.ylabel("Temps (minutes)")
-    plt.title("Temps prédit par kilomètre")
-    plt.xticks(np.array(km_numbers) + bar_width/2 if "weather_adjustment_s" in results else km_numbers)
-    plt.xlim(0.5, max(km_numbers) + 1)
-    plt.ylim(0, max(km_times) * 1.2 if "weather_adjustment_s" not in results else max(max(km_times), max(weather_times)) * 1.2)
-    plt.legend()
-    plt.grid(True, axis='y')
-    
-    plt.tight_layout()
-    
-    if save_to:
+                    ha='center', va='bottom', fontsize=9)
+        
+        if "weather_adjustment_s" in results:
+            for i, bar in enumerate(weather_bars):
+                height = bar.get_height()
+                minutes = int(height)
+                seconds = int((height - minutes) * 60)
+                plt.text(bar.get_x() + bar.get_width()/2., height + 0.1,
+                        f"{minutes}'{seconds:02}\"",
+                        ha='center', va='bottom', fontsize=9, color='darkred')
+        
+        # Configurer le graphique
+        plt.xlabel("Kilomètre")
+        plt.ylabel("Temps (minutes)")
+        plt.title("Temps prédit par kilomètre")
+        plt.xticks(np.array(km_numbers) + bar_width/2 if "weather_adjustment_s" in results else km_numbers)
+        plt.xlim(0.5, max(km_numbers) + 1)
+        plt.ylim(0, max(km_times) * 1.2 if "weather_adjustment_s" not in results else max(max(km_times), max(weather_times)) * 1.2)
+        plt.legend()
+        plt.grid(True, axis='y')
+        
+        plt.tight_layout()
         plt.savefig(save_to, format='png')
         plt.close()
-    else:
-        plt.show()
 
 def parse_gpx_web(gpx_file_path: str) -> Dict[str, Any]:
     """

@@ -3,8 +3,8 @@ import gpxpy.gpx
 from math import radians, cos, sin, asin, sqrt
 from collections import namedtuple
 from typing import List
-import matplotlib.pyplot as plt
 import numpy as np
+import json
 
 # Configuration des paramètres
 GPX_FILE = 'Afternoon_Run.gpx'
@@ -228,44 +228,26 @@ if __name__ == '__main__':
     pace_adjustment_factors.insert(0, 1.0)
     pace_adjustment_factors = np.array(pace_adjustment_factors)
 
-    # Génération du graphique de profil d'élévation
-    plt.figure(figsize=(12, 10))
-    plt.subplot(3, 1, 1)
+    # Extraction des données pour les graphiques
     elevations = [p.elevation for p in points]
-    plt.plot(distances_km, elevations)
-    plt.xlabel("Distance (km)")
-    plt.ylabel("Altitude (m)")
-    plt.title("Profil d'élévation")
-    plt.grid(True)
-
-    # Génération du graphique de pace ajusté (en min/km)
-    plt.subplot(3, 1, 2)
     flat_pace_min_per_km = 60 / runner_flat_pace_kmh
     adjusted_speeds = np.array([flat_speed_ms * get_speed_adjustment_factor(slope) for slope in slopes])
     adjusted_paces_min_per_km = 60 / (adjusted_speeds * 3.6)
     distances_km_pace = distances_km[:-1]
-    plt.plot(distances_km_pace, np.full_like(distances_km_pace, flat_pace_min_per_km), label='Pace sur plat')
-    plt.plot(distances_km_pace, adjusted_paces_min_per_km, label='Pace ajusté (GNR-GAP)')
-    plt.xlabel("Distance (km)")
-    plt.ylabel("Pace (min/km)")
-    plt.title("Pace ajusté en fonction de la distance (min/km)")
-    plt.legend()
-    plt.grid(True)
-    plt.ylim(0, 15) # Set a reasonable y-limit for pace (optional)
-
-    # Génération du graphique de facteur d'ajustement du pace
-    plt.subplot(3, 1, 3)
-    plt.plot(distances_km, pace_adjustment_factors, label='Facteur d\'ajustement du pace')
-    plt.xlabel("Distance (km)")
-    plt.ylabel("Facteur d'ajustement")
-    plt.title("Facteur d'ajustement du pace en fonction de la distance")
-    plt.axhline(y=1.0, color='r', linestyle='-', label='Aucun ajustement (plat)')
-    plt.legend()
-    plt.grid(True)
-    plt.ylim(0.8, 4.5) # Set y-limit based on the image
-
-    plt.tight_layout()
-    plt.show()
+    
+    # Création du dictionnaire pour le JSON
+    plot_data = {
+        "distances_km": distances_km.tolist(),
+        "elevations": elevations,
+        "flat_pace_min_per_km": float(flat_pace_min_per_km),
+        "adjusted_paces_min_per_km": adjusted_paces_min_per_km.tolist(),
+        "pace_adjustment_factors": pace_adjustment_factors.tolist(),
+        "filename": GPX_FILE
+    }
+    
+    # Sauvegarde des données en JSON
+    with open('plot_data.json', 'w') as json_file:
+        json.dump(plot_data, json_file, indent=2)
 
     # Calcul des indicateurs (text output)
     results = calculate_gnr_gap(points, flat_pace_kmh=runner_flat_pace_kmh)

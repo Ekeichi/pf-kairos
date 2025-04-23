@@ -124,16 +124,18 @@ def upload_file():
                 flash(results["error"])
                 return redirect(url_for('predict'))
             
-            # Générer le graphique et le convertir en base64 pour l'affichage
+            # Générer les données pour Plotly et conserver une image pour le PDF
             img_bytes = io.BytesIO()
             web_predictor.visualize_results_web(results, filepath, save_to=img_bytes)
             img_bytes.seek(0)
             img_base64 = base64.b64encode(img_bytes.getvalue()).decode('utf-8')
             
+            # Les données JSON pour Plotly sont déjà sauvegardées par visualize_results_web
+            
             return render_template('results.html', 
                                results=results, 
                                filename=filename,
-                               img_base64=img_base64,
+                               img_base64=img_base64,  # Conservé pour la compatibilité 
                                weather_data=weather_data)
         except Exception as e:
             flash(f"Erreur lors de la prédiction: {e}")
@@ -142,6 +144,21 @@ def upload_file():
     else:
         flash('Format de fichier non autorisé, seuls les fichiers .gpx sont acceptés')
         return redirect(url_for('predict'))
+
+@app.route('/uploads/<path:filename>')
+def serve_upload(filename):
+    """Servir les fichiers depuis le dossier uploads"""
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    app.logger.info(f"Tentative d'accès au fichier: {file_path}")
+    
+    if not os.path.exists(file_path):
+        app.logger.error(f"Fichier non trouvé: {file_path}")
+        return f"Fichier non trouvé: {filename}", 404
+    
+    app.logger.info(f"Fichier trouvé, envoi de: {file_path}")
+    # Définir le type MIME explicitement pour les fichiers JSON
+    mime_type = 'application/json' if file_path.endswith('.json') else None
+    return send_file(file_path, mimetype=mime_type)
 
 @app.route('/download_results/<filename>')
 def download_results(filename):

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyse Marathon</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1e2a44;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .time-boxes {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .time-box {
+            background-color: #2a3b5e;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            flex: 1;
+            max-width: 400px;
+        }
+        .chart-container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .charts-row {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="title">ANALYSE MARATHON</h1>
+    
+    <div class="time-boxes">
+        <div class="time-box">
+            <h2>BASE TIME</h2>
+            <p id="base-time">03:52:35</p>
+            <p>(Flat terrain prediction)</p>
+        </div>
+        <div class="time-box">
+            <h2>WITH ELEVATION</h2>
+            <p id="elevation-time">04:49:30</p>
+            <p id="elevation-adjustment">(Elevation adjustment: 00:56:55)</p>
+        </div>
+    </div>
+    
+    <div class="charts-row">
+        <div class="chart-container">
+            <div id="elevation-profile" style="width:100%; height:400px;"></div>
+        </div>
+        <div class="chart-container">
+            <div id="pace-chart" style="width:100%; height:400px;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Fonction pour charger les données JSON et créer les graphiques
+        async function loadData() {
+            try {
+                const response = await fetch('plot_data.json');
+                const data = await response.json();
+                
+                // Mise à jour du titre avec le nom du fichier
+                document.getElementById('title').textContent = `ANALYSE POUR ${data.filename.toUpperCase()}`;
+                
+                // Création du graphique de profil d'élévation
+                const elevationTrace = {
+                    x: data.distances_km,
+                    y: data.elevations,
+                    type: 'scatter',
+                    mode: 'lines',
+                    line: {
+                        color: '#1f77b4',
+                        width: 2
+                    },
+                    name: 'Élévation'
+                };
+                
+                const elevationLayout = {
+                    title: 'Profil d\'élévation',
+                    xaxis: {
+                        title: 'Distance (km)'
+                    },
+                    yaxis: {
+                        title: 'Altitude (m)'
+                    },
+                    plot_bgcolor: '#fff',
+                    paper_bgcolor: '#fff',
+                    font: {
+                        color: '#333'
+                    }
+                };
+                
+                Plotly.newPlot('elevation-profile', [elevationTrace], elevationLayout);
+                
+                // Création du graphique de pace
+                const flatPaceTrace = {
+                    x: data.distances_km.slice(0, -1),
+                    y: Array(data.distances_km.length - 1).fill(data.flat_pace_min_per_km),
+                    type: 'scatter',
+                    mode: 'lines',
+                    line: {
+                        color: 'red',
+                        width: 2,
+                        dash: 'dash'
+                    },
+                    name: 'Pace sur plat'
+                };
+                
+                const adjustedPaceTrace = {
+                    x: data.distances_km.slice(0, -1),
+                    y: data.adjusted_paces_min_per_km,
+                    type: 'bar',
+                    marker: {
+                        color: '#1f77b4'
+                    },
+                    name: 'Pace ajusté'
+                };
+                
+                const paceLayout = {
+                    title: 'Temps prédit par kilomètre',
+                    xaxis: {
+                        title: 'Kilomètre'
+                    },
+                    yaxis: {
+                        title: 'Temps (min/km)',
+                        range: [0, 8]
+                    },
+                    plot_bgcolor: '#fff',
+                    paper_bgcolor: '#fff',
+                    font: {
+                        color: '#333'
+                    },
+                    barmode: 'relative'
+                };
+                
+                Plotly.newPlot('pace-chart', [flatPaceTrace, adjustedPaceTrace], paceLayout);
+            } catch (error) {
+                console.error('Erreur lors du chargement des données:', error);
+                document.body.innerHTML += `<p style="color: red; text-align: center;">
+                    Erreur lors du chargement des données: ${error.message}. 
+                    Vérifiez que vous avez bien généré le fichier plot_data.json en exécutant le script Python.
+                </p>`;
+            }
+        }
+        
+        // Chargement des données et création des graphiques au chargement de la page
+        window.addEventListener('load', loadData);
+    </script>
+</body>
+</html>

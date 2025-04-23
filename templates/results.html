@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Special+Gothic+Expanded+One&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <style>
     .results-container {
       max-width: 900px;
@@ -148,7 +149,7 @@
   <div class="container">
     <nav>
       <ul>
-        <li><a href="/">KAIROS 1</a></li>
+        <li><a href="/">KAIROS ZERO</a></li>
         <li><a href="/about">ABOUT</a></li>
         <li><a href="#">...</a></li>
       </ul>
@@ -190,7 +191,8 @@
         </div>
         
         <div class="graph-container">
-          <img src="data:image/png;base64,{{ img_base64 }}" alt="Prediction Visualization">
+          <div id="elevation-profile" style="width:100%; height:350px;"></div>
+          <div id="pace-chart" style="width:100%; height:350px;"></div>
         </div>
         
         {% if weather_data %}
@@ -222,5 +224,174 @@
     </div>
 
   </div>
+
+<script>
+  // Fonction pour charger les données JSON et créer les graphiques
+  async function loadPlotlyData() {
+    try {
+      // Utiliser l'URL encodée pour éviter les problèmes avec les caractères spéciaux
+      const jsonUrl = '/uploads/plot_data_' + encodeURIComponent('{{ filename }}') + '.json';
+      console.log('Chargement des données depuis:', jsonUrl);
+      
+      const response = await fetch(jsonUrl);
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP: ${response.status} - ${response.statusText}`);
+      }
+      
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.warn('Type de contenu inattendu:', contentType);
+      }
+      
+      const responseText = await response.text();
+      console.log('Texte brut reçu de longueur:', responseText.length);
+      
+      let data;
+      try {
+        data = JSON.parse(responseText);
+        console.log('Données JSON parsées avec succès');
+      } catch (jsonError) {
+        console.error('Erreur lors du parsing JSON:', jsonError);
+        throw new Error(`Impossible de parser les données JSON: ${jsonError.message}`);
+      }
+      
+      // Création du graphique de profil d'élévation
+      const elevationTrace = {
+        x: data.distances_km,
+        y: data.elevations,
+        type: 'scatter',
+        mode: 'lines',
+        line: {
+          color: '#1f77b4',
+          width: 2
+        },
+        name: 'Élévation'
+      };
+      
+      const elevationLayout = {
+        title: 'Profil d\'élévation',
+        xaxis: {
+          title: 'Distance (km)'
+        },
+        yaxis: {
+          title: 'Altitude (m)'
+        },
+        plot_bgcolor: 'rgba(255, 255, 255, 0.1)',
+        paper_bgcolor: 'rgba(255, 255, 255, 0.1)',
+        font: {
+          color: '#fff'
+        }
+      };
+      
+      Plotly.newPlot('elevation-profile', [elevationTrace], elevationLayout);
+      
+      // Création du graphique de pace
+      const flatPaceTrace = {
+        x: data.km_numbers,
+        y: Array(data.km_numbers.length).fill(data.flat_pace_min_per_km),
+        type: 'scatter',
+        mode: 'lines',
+        line: {
+          color: 'rgba(255, 255, 255, 0.7)',
+          width: 2,
+          dash: 'dash'
+        },
+        name: 'Pace sur plat'
+      };
+      
+      // Trace pour le temps moyen par km
+      const avgPaceTrace = {
+        x: data.km_numbers,
+        y: Array(data.km_numbers.length).fill(data.avg_pace),
+        type: 'scatter',
+        mode: 'lines',
+        line: {
+          color: 'rgba(0, 129, 255, 0.7)',
+          width: 2,
+          dash: 'dash'
+        },
+        name: `Temps moyen: ${Math.floor(data.avg_pace)}'${Math.floor((data.avg_pace-Math.floor(data.avg_pace))*60).toString().padStart(2, '0')}"/km`
+      };
+      
+      // Trace pour le temps ajusté
+      const adjustedPaceTrace = {
+        x: data.km_numbers,
+        y: data.km_times,
+        type: 'bar',
+        marker: {
+          color: 'rgba(0, 129, 255, 0.7)'
+        },
+        name: 'Temps par km (avec dénivelé)'
+      };
+      
+      // Traces pour la page
+      let traces = [flatPaceTrace, avgPaceTrace, adjustedPaceTrace];
+      
+      // Ajouter les traces météo si disponibles
+      if (data.has_weather) {
+        const weatherPaceTrace = {
+          x: data.km_numbers,
+          y: data.weather_times,
+          type: 'bar',
+          marker: {
+            color: 'rgba(255, 75, 75, 0.7)'
+          },
+          name: 'Temps par km (avec météo)'
+        };
+        
+        const avgWeatherPaceTrace = {
+          x: data.km_numbers,
+          y: Array(data.km_numbers.length).fill(data.avg_pace_weather),
+          type: 'scatter',
+          mode: 'lines',
+          line: {
+            color: 'rgba(255, 75, 75, 0.7)',
+            width: 2,
+            dash: 'dash'
+          },
+          name: `Temps moyen avec météo: ${Math.floor(data.avg_pace_weather)}'${Math.floor((data.avg_pace_weather-Math.floor(data.avg_pace_weather))*60).toString().padStart(2, '0')}"/km`
+        };
+        
+        traces.push(weatherPaceTrace);
+        traces.push(avgWeatherPaceTrace);
+      }
+      
+      const paceLayout = {
+        title: 'Temps prédit par kilomètre',
+        xaxis: {
+          title: 'Kilomètre',
+          tickmode: 'array',
+          tickvals: data.km_numbers
+        },
+        yaxis: {
+          title: 'Temps (min/km)',
+          range: [0, Math.max(...data.km_times) * 1.2]
+        },
+        plot_bgcolor: 'rgba(255, 255, 255, 0.1)',
+        paper_bgcolor: 'rgba(255, 255, 255, 0.1)',
+        font: {
+          color: '#fff'
+        },
+        barmode: 'group',
+        legend: {
+          orientation: 'h',
+          y: -0.2
+        }
+      };
+      
+      Plotly.newPlot('pace-chart', traces, paceLayout);
+      
+    } catch (error) {
+      console.error('Erreur lors du chargement des données:', error);
+      document.getElementById('elevation-profile').innerHTML = `
+        <p style="color: red; text-align: center;">
+          Erreur lors du chargement des données: ${error.message}
+        </p>`;
+    }
+  }
+  
+  // Chargement des données et création des graphiques au chargement de la page
+  window.addEventListener('load', loadPlotlyData);
+</script>
 </body>
 </html>
