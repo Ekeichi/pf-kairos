@@ -5163,5 +5163,9 @@
   "elevation_adjustment_s": 0.0,
   "time_with_elevation_s": 13623.396213263988,
   "elevation_adjustment_formatted": "00:00:00",
-  "time_with_elevation_formatted": "03:47:03"
+  "time_with_elevation_formatted": "03:47:03",
+  "weather_adjustment_s": 451.69541493199915,
+  "final_time_s": 14075.091628195987,
+  "weather_adjustment_formatted": "00:07:31",
+  "final_time_formatted": "03:54:35"
 }

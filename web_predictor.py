@@ -155,6 +155,34 @@ def visualize_results_web(results: Dict[str, Any], gpx_file_path: str, save_to=N
             # Augmentation plus forte dans les derniers km
             return 1.03 + 0.07 * ((race_completion - 0.8) / 0.2)
     
+    # Facteur de stratégie: ajuste le rythme en fonction de la position et du dénivelé
+    def strategy_factor(km_number, total_km, slopes, distances_km):
+        race_position = km_number / total_km
+        # Calculer la pente moyenne pour ce kilomètre
+        indices = np.where((distances_km >= km_number-1) & (distances_km < km_number))[0]
+        avg_slope = 0
+        if len(indices) > 0:
+            avg_slope = np.mean([slopes[i] for i in indices])
+        
+        # Ajuster la stratégie en fonction de la pente et de la position
+        if avg_slope > 5:  # Montée très raide (> 5%)
+            return 1.15  # Ralentir de 15%
+        elif avg_slope > 2:  # Montée modérée (2-5%)
+            return 1.08  # Ralentir de 8%
+        elif avg_slope < -5:  # Descente très raide (< -5%)
+            return 0.85  # Accélérer de 15%
+        elif avg_slope < -2:  # Descente modérée (-2 à -5%)
+            return 0.92  # Accélérer de 8%
+        else:  # Terrain plat ou pente légère
+            if race_position < 0.1:  # Premier 10% - départ contrôlé
+                return 0.98
+            elif race_position > 0.9:  # Dernier 10% - sprint final
+                return 0.97
+            elif race_position > 0.7:  # 70-90% - préparation finale
+                return 0.99
+            else:  # 10-70% - allure stable
+                return 1.0
+    
     # Calculer le temps prédit pour chaque kilomètre
     km_times = []  # Temps en minutes pour chaque km
     km_numbers = []  # Numéro du kilomètre
@@ -166,8 +194,8 @@ def visualize_results_web(results: Dict[str, Any], gpx_file_path: str, save_to=N
             # Calculer l'allure moyenne pour ce km (min/km)
             km_pace = np.mean(adjusted_paces[indices])
             
-            # Appliquer le facteur de fatigue progressive
-            km_pace_with_fatigue = km_pace * fatigue_factor(km+1, total_distance)
+            # Appliquer les facteurs de fatigue et de stratégie
+            km_pace_with_fatigue = km_pace * fatigue_factor(km+1, total_distance) * strategy_factor(km+1, total_distance, slopes, distances_km)
             
             # Convertir l'allure en temps pour ce km (minutes)
             km_time = km_pace_with_fatigue
@@ -208,6 +236,13 @@ def visualize_results_web(results: Dict[str, Any], gpx_file_path: str, save_to=N
         "has_weather": "weather_adjustment_s" in results
     }
     
+    # Ajouter les données pour le tableau
+    results["km_times"] = km_times
+    results["weather_km_times"] = weather_times if "weather_adjustment_s" in results else []
+    results["elevations"] = [elevations[i] for i in range(0, len(elevations), sample_rate)]
+    results["km_numbers"] = km_numbers
+    results["adjusted_paces"] = adjusted_paces.tolist()
+    
     # Sauvegarder les données pour Plotly
     plot_data_path = os.path.join(os.path.dirname(gpx_file_path), f"plot_data_{os.path.basename(gpx_file_path)}.json")
     with open(plot_data_path, 'w') as f:
@@ -216,21 +251,21 @@ def visualize_results_web(results: Dict[str, Any], gpx_file_path: str, save_to=N
     # Si on a besoin d'une image pour PDF ou pour compatibilité, générer avec matplotlib
     if save_to:
         # Créer une figure avec 2 sous-graphiques
-        plt.figure(figsize=(14, 10))
+        plt.figure(figsize=(20, 16))
         
         # Graphique 1: Profil d'élévation
         plt.subplot(2, 1, 1)
         plt.plot(distances_km, elevations)
-        plt.xlabel("Distance (km)")
-        plt.ylabel("Altitude (m)")
-        plt.title("Profil d'élévation")
+        plt.xlabel("Distance (km)", fontsize=14)
+        plt.ylabel("Altitude (m)", fontsize=14)
+        plt.title("Profil d'élévation", fontsize=16)
         plt.grid(True)
         
         # Graphique 2: Temps par kilomètre
         plt.subplot(2, 1, 2)
         
         # Créer des espaces entre les barres pour une meilleure lisibilité
-        bar_width = 0.35
+        bar_width = 0.6
         
         # Créer les barres pour le temps par km avec dénivelé
         bars = plt.bar(km_numbers, km_times, width=bar_width, 
@@ -256,7 +291,7 @@ def visualize_results_web(results: Dict[str, Any], gpx_file_path: str, save_to=N
             seconds = int((height - minutes) * 60)
             plt.text(bar.get_x() + bar.get_width()/2., height + 0.1,
                     f"{minutes}'{seconds:02}\"",
-                    ha='center', va='bottom', fontsize=9)
+                    ha='center', va='bottom', fontsize=12)
         
         if "weather_adjustment_s" in results:
             for i, bar in enumerate(weather_bars):
@@ -265,16 +300,16 @@ def visualize_results_web(results: Dict[str, Any], gpx_file_path: str, save_to=N
                 seconds = int((height - minutes) * 60)
                 plt.text(bar.get_x() + bar.get_width()/2., height + 0.1,
                         f"{minutes}'{seconds:02}\"",
-                        ha='center', va='bottom', fontsize=9, color='darkred')
+                        ha='center', va='bottom', fontsize=12, color='darkred')
         
         # Configurer le graphique
-        plt.xlabel("Kilomètre")
-        plt.ylabel("Temps (minutes)")
-        plt.title("Temps prédit par kilomètre")
+        plt.xlabel("Kilomètre", fontsize=14)
+        plt.ylabel("Temps (minutes)", fontsize=14)
+        plt.title("Temps prédit par kilomètre", fontsize=16)
         plt.xticks(np.array(km_numbers) + bar_width/2 if "weather_adjustment_s" in results else km_numbers)
         plt.xlim(0.5, max(km_numbers) + 1)
         plt.ylim(0, max(km_times) * 1.2 if "weather_adjustment_s" not in results else max(max(km_times), max(weather_times)) * 1.2)
-        plt.legend()
+        plt.legend(fontsize=12)
         plt.grid(True, axis='y')
         
         plt.tight_layout()
@@ -315,7 +350,11 @@ def parse_gpx_web(gpx_file_path: str) -> Dict[str, Any]:
         result = {
             "distance_km": total_distance_km,
             "elevation_profile": elevation_profile,
-            "gpx_points": points
+            "gpx_points": points,
+            "gpx_data": {
+                "gpx_points": points,
+                "distance_km": total_distance_km
+            }
         }
         
         return result
