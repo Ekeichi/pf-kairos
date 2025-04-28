@@ -8,297 +8,210 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Special+Gothic+Expanded+One&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
-  <style>
-    .form-container {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 2rem;
-      background-color: rgba(0, 0, 32, 0.9);
-      border: 1px dashed rgba(255, 255, 255, 0.5);
-    }
-    
-    .form-section {
-      margin-bottom: 2rem;
-    }
-    
-    .form-section h2 {
-      margin-bottom: 1rem;
-      font-size: 1.2rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    
-    label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-size: 0.9rem;
-    }
-    
-    input[type="file"],
-    input[type="text"],
-    input[type="number"],
-    input[type="checkbox"] {
-      margin-bottom: 1rem;
-      padding: 0.5rem;
-      width: 100%;
-      max-width: 400px;
-      background-color: rgba(255, 255, 255, 0.9);
-      color: #000020;
-      border: none;
-    }
-    
-    input[type="checkbox"] {
-      width: auto;
-    }
-    
-    .record-row {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 0.5rem;
-    }
-    
-    .record-row input {
-      width: 150px;
-    }
-    
-    .btn-submit {
-      display: inline-block;
-      margin: 1.5rem 0;
-      padding: 0.9rem 1.8rem;
-      background-color: #FFFFFF;
-      color: #000020;
-      text-decoration: none;
-      font-weight: bold;
-      border-radius: 0px;
-      font-size: 0.9rem;
-      text-transform: uppercase;
-      border: none;
-      cursor: pointer;
-    }
-    
-    .btn-submit:hover {
-      background-color: #DDDDDD;
-    }
-    
-    .weather-inputs {
-      display: none;
-    }
-    
-    .weather-inputs.show {
-      display: block;
-    }
-    
-    .record-inputs {
-      display: none;
-    }
-    
-    .record-inputs.show {
-      display: block;
-    }
-    
-    .back-btn {
-      margin-bottom: 1rem;
-      display: inline-block;
-      padding: 0.5rem 1rem;
-      text-decoration: none;
-      color: white;
-      border: 1px dashed rgba(255, 255, 255, 0.5);
-      font-size: 0.9rem;
-      text-transform: uppercase;
-    }
-    
-    .back-btn:hover {
-      background-color: rgba(255, 255, 255, 0.1);
-    }
-    
-    /* Styles pour la section Strava */
-    .strava-section {
-      margin-bottom: 1.5rem;
-      padding: 1rem;
-      background-color: rgba(0, 0, 0, 0.3);
-      border-left: 3px solid #FC5200;
-    }
-    
-    .strava-status {
-      font-weight: bold;
-      margin-bottom: 1rem;
-    }
-    
-    .strava-status.connected {
-      color: #2ecc71;
-    }
-    
-    .strava-status.warning {
-      color: #f39c12;
-    }
-    
-    .strava-message {
-      margin-bottom: 1rem;
-    }
-    
-    .strava-btn {
-      display: inline-block;
-      transition: opacity 0.2s;
-    }
-    
-    .strava-btn:hover {
-      opacity: 0.8;
-    }
-    
-    .strava-btn.logout {
-      padding: 0.5rem 1rem;
-      background-color: #333;
-      color: white;
-      text-decoration: none;
-      font-size: 0.8rem;
-      border-radius: 3px;
-      margin-top: 0.5rem;
-    }
-    
-    .strava-records {
-      margin-top: 1rem;
-    }
-    
-    .records-table {
-      margin-top: 1rem;
-      padding: 0.5rem;
-      background-color: rgba(0, 0, 0, 0.2);
-    }
-    
-    .records-table h3 {
-      font-size: 0.9rem;
-      margin-bottom: 0.5rem;
-      color: #FC5200;
-    }
-    
-    .records-table table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    
-    .records-table th, .records-table td {
-      padding: 0.5rem;
-      text-align: left;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    .records-table th {
-      font-size: 0.8rem;
-      font-weight: bold;
-      color: #DDD;
-    }
-    
-    .manual-records-section {
-      margin-top: 1.5rem;
-    }
-  </style>
 </head>
 <body>
   <div class="container">
-    <nav>
-      <ul>
-        <li><a href="/">KAIROS ZERO</a></li>
-        <li><a href="/about">ABOUT</a></li>
-        <li><a href="#">...</a></li>
-      </ul>
-    </nav>
+    <header>
+      <div class="logo">
+        <a href="/">PEAKFLOW TECHNOLOGIES</a>
+      </div>
+      <nav>
+        <button class="hamburger" aria-label="Open menu" aria-expanded="false">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <ul class="nav-links">
+          <li><a href="/">KAIROS ZERO</a></li>
+          <li><a href="/about">ABOUT</a></li>
+          <li><a href="#">...</a></li>
+        </ul>
+      </nav>
+    </header>
 
-    <div class="form-container">
-      <a href="/" class="back-btn">← Back to Home</a>
-      <h1>Predict Your Race Time</h1>
-      <p>To have the GPX of your race, you can find it on the website of the race, or use the Strava website.</p>
-      <form action="/upload" method="post" enctype="multipart/form-data">
-        <div class="form-section">
-          <h2>Upload GPX File</h2>
-          <input type="file" name="gpx_file" accept=".gpx" required>
-        </div>
+    <section class="page-section predict-section">
+      <div class="form-container">
+        <h1>Predict Your Race Time</h1>
+        <p class="subtitle">To have the GPX of your race, you can find it on the website of the race, or use the Strava website.</p>
         
-        <div class="form-section">
-          <h2>Personal Records (Optional)</h2>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+          <div class="form-section">
+            <h2>Upload GPX File</h2>
+            <div class="file-upload-container">
+              <div class="file-upload-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+              </div>
+              <p class="file-upload-text">Drop your GPX file here or click to browse</p>
+              <p class="file-upload-info">Supports .GPX format (max 5MB)</p>
+              <input type="file" name="gpx_file" accept=".gpx" required class="input-file">
+            </div>
+          </div>
           
+          <div class="form-section">
+            <h2>Personal Records (Optional)</h2>
+            
+            <div class="manual-records-section">
+              <div class="checkbox-wrapper">
+                <input type="checkbox" id="enable_custom_records" name="enable_custom_records" checked>
+                <label for="enable_custom_records">Enter my records manually</label>
+              </div>
+              
+              <div class="record-inputs show" id="recordInputs">
+                <p>Enter at least 3 personal records for better prediction accuracy.</p>
+                <div class="record-row">
+                  <input type="text" name="distance_0" placeholder="Distance (e.g. 5km)">
+                  <input type="text" name="time_0" placeholder="Time (e.g. 21:30)">
+                </div>
+                <div class="record-row">
+                  <input type="text" name="distance_1" placeholder="Distance (e.g. 10km)">
+                  <input type="text" name="time_1" placeholder="Time (e.g. 45:00)">
+                </div>
+                <div class="record-row">
+                  <input type="text" name="distance_2" placeholder="Distance (e.g. 21.1km)">
+                  <input type="text" name="time_2" placeholder="Time (e.g. 1:45:00)">
+                </div>
+                <div class="record-row">
+                  <input type="text" name="distance_3" placeholder="Distance (e.g. 42.2km)">
+                  <input type="text" name="time_3" placeholder="Time (e.g. 3:45:00)">
+                </div>
+                <div class="record-row">
+                  <input type="text" name="distance_4" placeholder="Distance (optional)">
+                  <input type="text" name="time_4" placeholder="Time (optional)">
+                </div>
+                <div class="record-row">
+                  <input type="text" name="distance_5" placeholder="Distance (optional)">
+                  <input type="text" name="time_5" placeholder="Time (optional)">
+                </div>
+                <div class="record-row">
+                  <input type="text" name="distance_6" placeholder="Distance (optional)">
+                  <input type="text" name="time_6" placeholder="Time (optional)">
+                </div>
+              </div>
+            </div>
+          </div>
           
-          <div class="manual-records-section">
-            <div>
-              <input type="checkbox" id="enable_custom_records" name="enable_custom_records" checked>
-              <label for="enable_custom_records">Enter my records manually</label>
+          <div class="form-section">
+            <h2>Weather Impact (Optional)</h2>
+            <div class="checkbox-wrapper">
+              <input type="checkbox" id="use_weather" name="use_weather">
+              <label for="use_weather">Include weather impact on your prediction</label>
             </div>
             
-            <div class="record-inputs show" id="recordInputs">
-              <p>Enter at least 3 personal records for better prediction accuracy.</p>
-              <div class="record-row">
-                <input type="text" name="distance_0" placeholder="Distance (e.g. 5km)">
-                <input type="text" name="time_0" placeholder="Time (e.g. 21:30)">
+            <div class="weather-inputs" id="weatherInputs">
+              <div class="checkbox-wrapper">
+                <input type="checkbox" id="manual_weather" name="manual_weather">
+                <label for="manual_weather">Enter weather data manually</label>
               </div>
-              <div class="record-row">
-                <input type="text" name="distance_1" placeholder="Distance (e.g. 10km)">
-                <input type="text" name="time_1" placeholder="Time (e.g. 45:00)">
-              </div>
-              <div class="record-row">
-                <input type="text" name="distance_2" placeholder="Distance (e.g. 21.1km)">
-                <input type="text" name="time_2" placeholder="Time (e.g. 1:45:00)">
-              </div>
-              <div class="record-row">
-                <input type="text" name="distance_3" placeholder="Distance (e.g. 42.2km)">
-                <input type="text" name="time_3" placeholder="Time (e.g. 3:45:00)">
-              </div>
-              <div class="record-row">
-                <input type="text" name="distance_4" placeholder="Distance (optional)">
-                <input type="text" name="time_4" placeholder="Time (optional)">
-              </div>
-              <div class="record-row">
-                <input type="text" name="distance_5" placeholder="Distance (optional)">
-                <input type="text" name="time_5" placeholder="Time (optional)">
-              </div>
-              <div class="record-row">
-                <input type="text" name="distance_6" placeholder="Distance (optional)">
-                <input type="text" name="time_6" placeholder="Time (optional)">
+              
+              <div id="manual_weather_inputs" style="display: none;">
+                <div class="weather-inputs-grid">
+                  <div class="input-group">
+                    <label for="temperature">Temperature (°C)</label>
+                    <input type="number" id="temperature" name="temperature" step="0.1" value="20">
+                  </div>
+                  <div class="input-group">
+                    <label for="humidity">Humidity (%)</label>
+                    <input type="number" id="humidity" name="humidity" step="1" min="0" max="100" value="60">
+                  </div>
+                  <div class="input-group">
+                    <label for="wind_speed">Wind Speed (km/h)</label>
+                    <input type="number" id="wind_speed" name="wind_speed" step="0.1" min="0" value="10">
+                  </div>
+                  <div class="input-group">
+                    <label for="wind_direction">Wind Direction (degrees)</label>
+                    <input type="number" id="wind_direction" name="wind_direction" step="1" min="0" max="360" value="0">
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-        
-        <div class="form-section">
-          <h2>Weather Impact (Optional)</h2>
-          <div>
-            <input type="checkbox" id="use_weather" name="use_weather">
-            <label for="use_weather">Include weather impact</label>
           </div>
           
-          <div class="weather-inputs" id="weatherInputs">
-            <div>
-              <input type="checkbox" id="manual_weather" name="manual_weather">
-              <label for="manual_weather">Enter weather data manually</label>
-            </div>
-            
-            <div id="manual_weather_inputs" style="display: none;">
-              <div>
-                <label for="temperature">Temperature (°C)</label>
-                <input type="number" id="temperature" name="temperature" step="0.1" value="20">
-              </div>
-              <div>
-                <label for="humidity">Humidity (%)</label>
-                <input type="number" id="humidity" name="humidity" step="1" min="0" max="100" value="60">
-              </div>
-              <div>
-                <label for="wind_speed">Wind Speed (km/h)</label>
-                <input type="number" id="wind_speed" name="wind_speed" step="0.1" min="0" value="10">
-              </div>
-              <div>
-                <label for="wind_direction">Wind Direction (degrees)</label>
-                <input type="number" id="wind_direction" name="wind_direction" step="1" min="0" max="360" value="0">
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <button type="submit" class="btn-submit">PREDICT MY TIME</button>
-      </form>
-    </div>
+          <button type="submit" class="btn primary submit-btn">PREDICT MY TIME</button>
+        </form>
+      </div>
+    </section>
 
+    <footer>
+      <div class="footer-content">
+        <div class="footer-left">
+          <p class="footer-logo">PEAKFLOW TECHNOLOGIES</p>
+          <p class="copyright">© 2025 PeakFlow Technologies</p>
+        </div>
+        <div class="footer-links">
+          <a href="https://github.com/Ekeichi/pf-kairos" target="_blank" rel="noopener noreferrer">GitHub</a>
+          <a href="/about#contact">Contact</a>
+          <a href="#">Privacy</a>
+        </div>
+      </div>
+    </footer>
   </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
+      // File upload enhancement
+      const fileInput = document.querySelector('.input-file');
+      const fileUploadContainer = document.querySelector('.file-upload-container');
+      const fileUploadText = document.querySelector('.file-upload-text');
+      
+      fileInput.addEventListener('change', function(e) {
+        if (this.files.length > 0) {
+          const fileName = this.files[0].name;
+          fileUploadText.textContent = 'File selected: ' + fileName;
+          fileUploadContainer.style.borderColor = 'rgba(100, 200, 255, 0.5)';
+          fileUploadContainer.style.backgroundColor = 'rgba(100, 200, 255, 0.05)';
+        } else {
+          fileUploadText.textContent = 'Drop your GPX file here or click to browse';
+          fileUploadContainer.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+          fileUploadContainer.style.backgroundColor = 'rgba(255, 255, 255, 0.03)';
+        }
+      });
+      
+      // Drag and drop functionality
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        fileUploadContainer.addEventListener(eventName, preventDefaults, false);
+      });
+      
+      function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      
+      ['dragenter', 'dragover'].forEach(eventName => {
+        fileUploadContainer.addEventListener(eventName, highlight, false);
+      });
+      
+      ['dragleave', 'drop'].forEach(eventName => {
+        fileUploadContainer.addEventListener(eventName, unhighlight, false);
+      });
+      
+      function highlight() {
+        fileUploadContainer.style.borderColor = 'rgba(100, 200, 255, 0.8)';
+        fileUploadContainer.style.backgroundColor = 'rgba(100, 200, 255, 0.1)';
+      }
+      
+      function unhighlight() {
+        fileUploadContainer.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+        fileUploadContainer.style.backgroundColor = 'rgba(255, 255, 255, 0.03)';
+      }
+      
+      fileUploadContainer.addEventListener('drop', handleDrop, false);
+      
+      function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        fileInput.files = files;
+        
+        if (files.length > 0) {
+          fileUploadText.textContent = 'File selected: ' + files[0].name;
+          fileUploadContainer.style.borderColor = 'rgba(100, 200, 255, 0.5)';
+          fileUploadContainer.style.backgroundColor = 'rgba(100, 200, 255, 0.05)';
+        }
+      }
+      
       // Toggle personal records inputs
       const recordsCheckbox = document.getElementById('enable_custom_records');
       const recordInputs = document.getElementById('recordInputs');
@@ -336,6 +249,17 @@
           manualWeatherInputs.style.display = 'none';
         }
       });
+    });
+
+    const hamburger = document.querySelector('.hamburger');
+    const navLinks = document.querySelector('.nav-links');
+
+    hamburger.addEventListener('click', function () {
+      this.classList.toggle('active');
+      navLinks.classList.toggle('active');
+
+      const expanded = this.classList.contains('active');
+      this.setAttribute('aria-expanded', expanded);
     });
   </script>
 </body>

@@ -13,6 +13,8 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.lib.units import inch, cm
 import tempfile
+import csv
+from datetime import datetime
 
 # Importer les modules existants
 import predictor_pipeline
@@ -24,15 +26,21 @@ import web_predictor
 # Configuration
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
 ALLOWED_EXTENSIONS = {'gpx'}
+NEWSLETTER_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'newsletter_subscribers.csv')
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Max 16 MB
 app.secret_key = "peakflow_secret_key"
 
-
 # Créer le dossier uploads s'il n'existe pas
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# Créer le fichier newsletter s'il n'existe pas
+if not os.path.exists(NEWSLETTER_FILE):
+    with open(NEWSLETTER_FILE, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(['email', 'subscription_date'])
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -163,33 +171,42 @@ def serve_upload(filename):
 @app.route('/download_results/<filename>')
 def download_results(filename):
     results_filename = f"results_{filename}.json"
+    plot_data_filename = f"plot_data_{filename}.json"
     results_path = os.path.join(app.config['UPLOAD_FOLDER'], results_filename)
+    plot_data_path = os.path.join(app.config['UPLOAD_FOLDER'], plot_data_filename)
     
-    if os.path.exists(results_path):
+    if os.path.exists(results_path) and os.path.exists(plot_data_path):
         # Charger les résultats JSON
         with open(results_path, 'r') as f:
             results = json.load(f)
+        with open(plot_data_path, 'r') as f:
+            plot_data = json.load(f)
         
         # Créer un PDF avec les résultats
         pdf_buffer = io.BytesIO()
-        doc = SimpleDocTemplate(pdf_buffer, pagesize=A4)
         
-        # Styles
+        # Styles simples
         styles = getSampleStyleSheet()
-        title_style = styles['Heading1']
-        subtitle_style = styles['Heading2']
-        normal_style = styles['Normal']
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=16,
+            spaceAfter=10,
+            alignment=1
+        )
+        normal_style = ParagraphStyle(
+            'CustomNormal',
+            parent=styles['Normal'],
+            fontSize=10,
+            spaceAfter=5
+        )
         
         # Contenu
         content = []
         
         # Titre
-        title = Paragraph(f"Résultats pour {filename}", title_style)
-        content.append(title)
-        content.append(Spacer(1, 20))
-        
-        # Section résumé
-        content.append(Paragraph("Résumé", subtitle_style))
+        content.append(Paragraph("Analyse de Performance", title_style))
+        content.append(Spacer(1, 5))
         
         # Temps prédit
         if "final_time_formatted" in results:
@@ -200,120 +217,111 @@ def download_results(filename):
         content.append(Paragraph(time_text, normal_style))
         content.append(Spacer(1, 10))
         
-        # Ajout des données météo si disponibles
-        if "weather_adjustment_s" in results:
-            weather_text = [
-                "Données météo:",
-                f"Température: {results.get('weather_data', {}).get('temperature', 'N/A')} °C",
-                f"Humidité: {results.get('weather_data', {}).get('humidity', 'N/A')} %",
-                f"Vent: {results.get('weather_data', {}).get('wind_speed', 'N/A')} km/h"
-            ]
-            for line in weather_text:
-                content.append(Paragraph(line, normal_style))
+        # Créer le graphique
+        plt.figure(figsize=(8, 4))
+        plt.style.use('default')
+        
+        # Utiliser les données du fichier plot_data
+        km_numbers = plot_data["km_numbers"]
+        km_times = plot_data["km_times"]
+        elevations = plot_data["elevations"]
+        
+        if km_numbers and km_times and elevations:
+            # Créer le graphique des temps par kilomètre
+            plt.bar(km_numbers, km_times, color='lightblue', alpha=0.7, label="Temps par km")
+            
+            # Ajouter une ligne pour le temps moyen
+            avg_pace = sum(km_times) / len(km_times)
+            plt.axhline(y=avg_pace, color='red', linestyle='--', 
+                        label=f"Temps moyen: {int(avg_pace)}'{int((avg_pace-int(avg_pace))*60):02}\" /km")
+            
+            # Ajouter les temps sur les barres
+            for i, (km, time) in enumerate(zip(km_numbers, km_times)):
+                minutes = int(time)
+                seconds = int((time - minutes) * 60)
+                plt.text(km, time + 0.1, f"{minutes}'{seconds:02}\"", 
+                         ha='center', va='bottom', fontsize=6)
+            
+            plt.xlabel("Kilomètre")
+            plt.ylabel("Temps (minutes)")
+            plt.title("Temps prédit par kilomètre")
+            plt.legend(fontsize=8)
+            plt.grid(True, axis='y', alpha=0.3)
+            plt.tight_layout()
+            
+            # Sauvegarder le graphique
+            img_buffer = io.BytesIO()
+            plt.savefig(img_buffer, format='png', dpi=150, bbox_inches='tight')
+            img_buffer.seek(0)
+            plt.close()
+            
+            # Ajouter le graphique au PDF
+            img = Image(img_buffer, width=450, height=200)
+            content.append(img)
             content.append(Spacer(1, 10))
         
-        # Générer et sauvegarder le graphique
-        img_bytes = io.BytesIO()
-        web_predictor.visualize_results_web(results, 
-                                           os.path.join(app.config['UPLOAD_FOLDER'], filename), 
-                                           save_to=img_bytes)
-        img_bytes.seek(0)
-        
-        # Ajouter le graphique au PDF
-        img = Image(img_bytes, width=500, height=350)
-        content.append(img)
-        content.append(Spacer(1, 20))
-        
-        # Section des temps par kilomètre
-        content.append(Paragraph("Temps par kilomètre", subtitle_style))
-        content.append(Spacer(1, 10))
-        
-        # Extraire les données du JSON
-        gpx_data = results["gpx_data"]
-        distance_km = gpx_data["distance_km"]
-        
-        # Approche simplifiée pour créer un tableau des temps par kilomètre
-        # Créer des temps approchés basés sur les données déjà calculées
-        km_times = []
-        km_numbers = []
-        
-        # Si nous avons le temps total, diviser en segments de kilomètre avec légère variation
-        if "time_with_elevation_s" in results:
-            total_time_s = results["final_time_s"] if "final_time_s" in results else results["time_with_elevation_s"]
-            avg_pace_min_per_km = (total_time_s / 60) / distance_km
-            
-            # Variabilité pour rendre les temps plus réalistes (+-10%)
-            import random
-            
-            # Fixer la graine pour des résultats cohérents
-            random.seed(hash(filename))
-            
-            # Créer des temps par kilomètre qui s'additionnent pour donner le temps total
-            remaining_distance = distance_km
-            remaining_time = total_time_s / 60  # en minutes
-            
-            for km in range(1, int(distance_km) + 1):
-                # Augmenter la variabilité vers la fin (simulation de fatigue)
-                variation_range = 0.05 if km < distance_km * 0.7 else 0.15
-                
-                # Si c'est le dernier km, utiliser exactement le temps restant
-                if km == int(distance_km):
-                    km_time = remaining_time
-                else:
-                    # Générer un temps pour ce km avec variation
-                    km_time = avg_pace_min_per_km * (1 + (random.random() * 2 - 1) * variation_range)
-                    
-                    # Assurer que nous ne dépassons pas le temps restant
-                    km_time = min(km_time, remaining_time - (remaining_distance - 1) * 0.8 * avg_pace_min_per_km)
-                    
-                    remaining_time -= km_time
-                    remaining_distance -= 1
-                
-                km_times.append(km_time)
-                km_numbers.append(km)
-        
         # Créer le tableau des temps par kilomètre
-        table_data = [['Kilomètre', 'Temps']]
-        for km, time in zip(km_numbers, km_times):
-            minutes = int(time)
-            seconds = int((time - minutes) * 60)
-            time_str = f"{minutes}'{seconds:02}\""
-            table_data.append([f"Km {km}", time_str])
-        
-        # Ajouter une ligne avec le temps total
-        if "final_time_formatted" in results:
-            table_data.append(['Total', results['final_time_formatted']])
-        else:
-            table_data.append(['Total', results['time_with_elevation_formatted']])
-        
-        # Créer le style du tableau
-        table_style = TableStyle([
-            ('BACKGROUND', (0, 0), (1, 0), colors.gray),
-            ('TEXTCOLOR', (0, 0), (1, 0), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('BACKGROUND', (0, -1), (-1, -1), colors.lightgrey),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
-            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
-        ])
-        
-        # Alternance de couleurs pour les lignes du tableau
-        for i in range(1, len(table_data)-1):
-            if i % 2 == 0:
-                table_style.add('BACKGROUND', (0, i), (-1, i), colors.lightgrey)
-        
-        table = Table(table_data)
-        table.setStyle(table_style)
-        content.append(table)
-        
-        # Ajouter les notes de bas de page
-        content.append(Spacer(1, 30))
-        footer_text = "Généré par PEAKFLOW Kairos 1 - Outil d'analyse et de prédiction de performance en course à pied"
-        footer = Paragraph(footer_text, styles['Italic'])
-        content.append(footer)
+        if km_numbers and km_times:
+            # Définir les en-têtes du tableau
+            headers = ['Km', 'Temps']
+            table_data = [headers]
+            
+            # Ajouter les données pour chaque kilomètre
+            for km, time in zip(km_numbers, km_times):
+                minutes = int(time)
+                seconds = int((time - minutes) * 60)
+                time_str = f"{minutes}'{seconds:02}\""
+                table_data.append([f"{km}", time_str])
+            
+            # Ajouter une ligne avec le temps total
+            if "final_time_formatted" in results:
+                table_data.append(['Total', results['final_time_formatted']])
+            else:
+                table_data.append(['Total', results['time_with_elevation_formatted']])
+            
+            # Créer le style du tableau
+            table_style = TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 8),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
+                ('BACKGROUND', (0, -1), (-1, -1), colors.lightgrey),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+            ])
+            
+            # Alternance de couleurs pour les lignes
+            for i in range(1, len(table_data)-1):
+                if i % 2 == 0:
+                    table_style.add('BACKGROUND', (0, i), (-1, i), colors.lightgrey)
+            
+            table = Table(table_data)
+            table.setStyle(table_style)
+            content.append(table)
+            
+            # Ajouter le copyright
+            content.append(Spacer(1, 10))
+            copyright_style = ParagraphStyle(
+                'Copyright',
+                parent=styles['Normal'],
+                fontSize=8,
+                alignment=1,
+                textColor=colors.grey
+            )
+            copyright_text = "© 2024 PeakFlow Technologies. Tous droits réservés."
+            content.append(Paragraph(copyright_text, copyright_style))
         
         # Construire le PDF
+        doc = SimpleDocTemplate(
+            pdf_buffer,
+            pagesize=A4,
+            rightMargin=30,
+            leftMargin=30,
+            topMargin=30,
+            bottomMargin=30
+        )
         doc.build(content)
         pdf_buffer.seek(0)
         
@@ -328,6 +336,30 @@ def download_results(filename):
     else:
         flash("Le fichier de résultats n'existe pas")
         return redirect(url_for('predict'))
+
+@app.route('/subscribe', methods=['POST'])
+def subscribe():
+    email = request.form.get('email')
+    
+    if not email:
+        flash('Please provide an email address')
+        return redirect(url_for('about'))
+    
+    # Vérifier si l'email existe déjà
+    with open(NEWSLETTER_FILE, 'r', newline='') as f:
+        reader = csv.reader(f)
+        next(reader)  # Skip header
+        if any(row[0] == email for row in reader):
+            flash('You are already subscribed to our newsletter!')
+            return redirect(url_for('about'))
+    
+    # Ajouter le nouvel abonné
+    with open(NEWSLETTER_FILE, 'a', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow([email, datetime.now().strftime('%Y-%m-%d %H:%M:%S')])
+    
+    flash('Thank you for subscribing to our newsletter!')
+    return redirect(url_for('about'))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)

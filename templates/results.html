@@ -11,274 +11,136 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <style>
-        .results-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-            background-color: rgba(0, 0, 32, 0.9);
-            border: 1px dashed rgba(255, 255, 255, 0.5);
-        }
-        
-        .back-btn {
-            margin-bottom: 1rem;
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            text-decoration: none;
-            color: white;
-            border: 1px dashed rgba(255, 255, 255, 0.5);
-            font-size: 0.9rem;
-            text-transform: uppercase;
-        }
-        
-        .back-btn:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-        
-        .results-section {
-            margin-bottom: 2rem;
-        }
-        
-        .results-section h2 {
-            font-size: 1.2rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px dashed rgba(255, 255, 255, 0.5);
-        }
-        
-        .time-display {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 2rem;
-            margin-bottom: 1.5rem;
-        }
-        
-        .time-card {
-            flex: 1;
-            min-width: 200px;
-            padding: 1rem;
-            background-color: rgba(255, 255, 255, 0.1);
-            border: 1px dashed rgba(255, 255, 255, 0.3);
-        }
-        
-        .time-card h3 {
-            margin-top: 0;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: rgba(255, 255, 255, 0.7);
-        }
-        
-        .time-value {
-            font-size: 1.8rem;
-            font-weight: bold;
-            margin: 0.5rem 0;
-        }
-        
-        .time-details {
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.7);
-        }
-        
-        .graph-container {
-            margin-top: 2rem;
-            text-align: center;
-        }
-        
-        .graph-container img {
-            max-width: 100%;
-            height: auto;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-        
-        .weather-details {
-            margin-top: 1.5rem;
-            padding: 1rem;
-            background-color: rgba(255, 255, 255, 0.1);
-            border: 1px dashed rgba(255, 255, 255, 0.3);
-        }
-        
-        .weather-details h3 {
-            margin-top: 0;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-        }
-        
-        .weather-data {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-        
-        .weather-item {
-            flex: 1;
-            min-width: 120px;
-        }
-        
-        .weather-label {
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.7);
-        }
-        
-        .weather-value {
-            font-size: 1.1rem;
-            font-weight: bold;
-        }
-        
-        .download-btn {
-            display: inline-block;
-            margin: 1.5rem 0;
-            padding: 0.9rem 1.8rem;
-            background-color: #FFFFFF;
-            color: #000020;
-            text-decoration: none;
-            font-weight: bold;
-            border-radius: 0px;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            border: none;
-            cursor: pointer;
-        }
-        
-        .download-btn:hover {
-            background-color: #DDDDDD;
-        }
-        
-        .pace-table {
-            width: 100%;
-            margin-top: 2rem;
-            border-collapse: collapse;
-            background-color: rgba(255, 255, 255, 0.1);
-            border: 1px dashed rgba(255, 255, 255, 0.3);
-        }
-        
-        .pace-table th, .pace-table td {
-            padding: 0.8rem;
-            text-align: center;
-            border: 1px dashed rgba(255, 255, 255, 0.3);
-        }
-        
-        .pace-table th {
-            background-color: rgba(255, 255, 255, 0.1);
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .pace-table tr:nth-child(even) {
-            background-color: rgba(255, 255, 255, 0.05);
-        }
-        
-        .pace-table-container {
-            margin-top: 2rem;
-            overflow-x: auto;
-        }
-    </style>
 </head>
 <body>
     <div class="container">
-        <nav>
-            <ul>
-                <li><a href="/">KAIROS ZERO</a></li>
-                <li><a href="/about">ABOUT</a></li>
-                <li><a href="#">...</a></li>
-            </ul>
-        </nav>
+        <header>
+            <div class="logo">
+                <a href="/">PEAKFLOW TECHNOLOGIES</a>
+            </div>
+            <nav>
+                <button class="hamburger" aria-label="Open menu" aria-expanded="false">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <ul class="nav-links">
+                    <li><a href="/">KAIROS ZERO</a></li>
+                    <li><a href="/about">ABOUT</a></li>
+                    <li><a href="#">...</a></li>
+                </ul>
+            </nav>
+        </header>
 
-        <div class="results-container">
-            <a href="/predict" class="back-btn">← Back to Prediction</a>
-            
-            <h1>Race Time Prediction Results</h1>
-            <p class="subtitle">ANALYSIS FOR {{ filename }}</p>
-            
-            <div class="results-section">
-                <h2>Predicted Times</h2>
+        <section class="page-section results-section">
+            <div class="results-container">
+                <h1>Race Time Prediction Results</h1>
+                <p class="subtitle">ANALYSIS FOR {{ filename }}</p>
                 
-                <div class="time-display">
-                    <div class="time-card">
-                        <h3>Base Time</h3>
-                        <div class="time-value">{{ results.base_time_formatted }}</div>
-                        <div class="time-details">Flat terrain prediction</div>
+                <div class="prediction-results">
+                    <h2>Predicted Times</h2>
+                    
+                    <div class="time-display">
+                        <div class="time-card">
+                            <h3>Base Time</h3>
+                            <div class="time-value">{{ results.base_time_formatted }}</div>
+                            <div class="time-details">Flat terrain prediction</div>
+                        </div>
+                        
+                        <div class="time-card">
+                            <h3>With Elevation</h3>
+                            <div class="time-value">{{ results.time_with_elevation_formatted }}</div>
+                            <div class="time-details">
+                                Elevation adjustment: {{ results.elevation_adjustment_formatted }}
+                            </div>
+                        </div>
+                        
+                        {% if weather_data %}
+                        <div class="time-card">
+                            <h3>Final Prediction</h3>
+                            <div class="time-value">{{ results.final_time_formatted }}</div>
+                            <div class="time-details">
+                                Weather adjustment: {{ results.weather_adjustment_formatted }}
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
                     
-                    <div class="time-card">
-                        <h3>With Elevation</h3>
-                        <div class="time-value">{{ results.time_with_elevation_formatted }}</div>
-                        <div class="time-details">
-                            Elevation adjustment: {{ results.elevation_adjustment_formatted }}
-                        </div>
+                    <div class="graph-container">
+                        <div id="combined-chart" style="width:100%; height:800px;"></div>
+                    </div>
+                    
+                    <div class="pace-table-container">
+                        <h2>Kilometer by Kilometer Pace</h2>
+                        <table class="pace-table">
+                            <thead>
+                                <tr>
+                                    <th>Kilometer</th>
+                                    <th>Time</th>
+                                    {% if results.weather_km_times %}
+                                    <th>Time (with weather)</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for i in range(results.km_numbers|length) %}
+                                <tr>
+                                    <td>Km {{ results.km_numbers[i] }}</td>
+                                    <td>{{ "%.0f"|format(results.km_times[i]|int) }}'{{ "%.0f"|format((results.km_times[i] - results.km_times[i]|int) * 60) }}"</td>
+                                    {% if results.weather_km_times %}
+                                    <td>{{ "%.0f"|format(results.weather_km_times[i]|int) }}'{{ "%.0f"|format((results.weather_km_times[i] - results.weather_km_times[i]|int) * 60) }}"</td>
+                                    {% endif %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                     
                     {% if weather_data %}
-                    <div class="time-card">
-                        <h3>Final Prediction</h3>
-                        <div class="time-value">{{ results.final_time_formatted }}</div>
-                        <div class="time-details">
-                            Weather adjustment: {{ results.weather_adjustment_formatted }}
+                    <div class="weather-details">
+                        <h2>Weather Conditions</h2>
+                        <div class="weather-data">
+                            <div class="weather-item">
+                                <div class="weather-label">Temperature</div>
+                                <div class="weather-value">{{ weather_data.temperature }}°C</div>
+                            </div>
+                            <div class="weather-item">
+                                <div class="weather-label">Humidity</div>
+                                <div class="weather-value">{{ weather_data.humidity }}%</div>
+                            </div>
+                            <div class="weather-item">
+                                <div class="weather-label">Wind Speed</div>
+                                <div class="weather-value">{{ weather_data.wind_speed }} km/h</div>
+                            </div>
+                            <div class="weather-item">
+                                <div class="weather-label">Wind Direction</div>
+                                <div class="weather-value">{{ weather_data.wind_direction }}°</div>
+                            </div>
                         </div>
                     </div>
                     {% endif %}
                 </div>
                 
-                <div class="graph-container">
-                    <div id="combined-chart" style="width:100%; height:800px;"></div>
+                <div class="actions">
+                    <a href="{{ url_for('download_results', filename=filename) }}" class="btn primary">Download Results</a>
+                    <a href="/predict" class="btn secondary">New Prediction</a>
                 </div>
-                
-                <div class="pace-table-container">
-                    <h2>Allures par kilomètre</h2>
-                    <table class="pace-table">
-                        <thead>
-                            <tr>
-                                <th>Kilomètre</th>
-                                <th>Temps</th>
-                                {% if results.weather_km_times %}
-                                <th>Temps (avec météo)</th>
-                                {% endif %}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for i in range(results.km_numbers|length) %}
-                            <tr>
-                                <td>Km {{ results.km_numbers[i] }}</td>
-                                <td>{{ "%.0f"|format(results.km_times[i]|int) }}'{{ "%.0f"|format((results.km_times[i] - results.km_times[i]|int) * 60) }}"</td>
-                                {% if results.weather_km_times %}
-                                <td>{{ "%.0f"|format(results.weather_km_times[i]|int) }}'{{ "%.0f"|format((results.weather_km_times[i] - results.weather_km_times[i]|int) * 60) }}"</td>
-                                {% endif %}
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                
-                {% if weather_data %}
-                <div class="weather-details">
-                    <h3>Weather Conditions</h3>
-                    <div class="weather-data">
-                        <div class="weather-item">
-                            <div class="weather-label">Temperature</div>
-                            <div class="weather-value">{{ weather_data.temperature }}°C</div>
-                        </div>
-                        <div class="weather-item">
-                            <div class="weather-label">Humidity</div>
-                            <div class="weather-value">{{ weather_data.humidity }}%</div>
-                        </div>
-                        <div class="weather-item">
-                            <div class="weather-label">Wind Speed</div>
-                            <div class="weather-value">{{ weather_data.wind_speed }} km/h</div>
-                        </div>
-                        <div class="weather-item">
-                            <div class="weather-label">Wind Direction</div>
-                            <div class="weather-value">{{ weather_data.wind_direction }}°</div>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
             </div>
-            
-            <a href="{{ url_for('download_results', filename=filename) }}" class="download-btn">Download Results</a>
-        </div>
+        </section>
+
+        <footer>
+            <div class="footer-content">
+                <div class="footer-left">
+                    <p class="footer-logo">PEAKFLOW TECHNOLOGIES</p>
+                    <p class="copyright">© 2025 PeakFlow Technologies</p>
+                </div>
+                <div class="footer-links">
+                    <a href="https://github.com/Ekeichi/pf-kairos" target="_blank" rel="noopener noreferrer">GitHub</a>
+                    <a href="/about#contact">Contact</a>
+                    <a href="#">Privacy</a>
+                </div>
+            </div>
+        </footer>
     </div>
 
     <script>
@@ -372,44 +234,44 @@
                 const layout = {
                     title: {
                         text: 'Elevation Profile and Time per Kilometer',
-                        font: { size: 20 }
+                        font: { size: 20, color: 'white' }
                     },
                     xaxis: {
                         title: {
                             text: 'Distance (km)',
-                            font: { size: 16 }
+                            font: { size: 16, color: 'white' }
                         },
-                        tickfont: { size: 14 }
+                        tickfont: { size: 14, color: 'white' }
                     },
                     yaxis: {
                         title: {
                             text: 'Elevation (m)',
-                            font: { size: 16 }
+                            font: { size: 16, color: 'white' }
                         },
-                        tickfont: { size: 14 },
+                        tickfont: { size: 14, color: 'white' },
                         side: 'left',
                         range: [minElevation - elevationRange * 0.1, maxElevation + elevationRange * 0.1]
                     },
                     yaxis2: {
                         title: {
                             text: 'Time (min/km)',
-                            font: { size: 16 }
+                            font: { size: 16, color: 'white' }
                         },
                         range: [0, maxTime * 1.2],
-                        tickfont: { size: 14 },
+                        tickfont: { size: 14, color: 'white' },
                         side: 'right',
                         overlaying: 'y'
                     },
                     plot_bgcolor: 'rgba(255, 255, 255, 0.1)',
-                    paper_bgcolor: 'rgba(255, 255, 255, 0.1)',
+                    paper_bgcolor: 'rgba(0, 0, 50, 0.4)',
                     font: {
-                        color: '#fff'
+                        color: 'white'
                     },
                     barmode: 'group',
                     legend: {
                         orientation: 'h',
                         y: -0.2,
-                        font: { size: 14 }
+                        font: { size: 14, color: 'white' }
                     }
                 };
                 
@@ -426,6 +288,17 @@
         
         // Chargement des données et création des graphiques au chargement de la page
         window.addEventListener('load', loadPlotlyData);
+
+        const hamburger = document.querySelector('.hamburger');
+        const navLinks = document.querySelector('.nav-links');
+
+        hamburger.addEventListener('click', function () {
+            this.classList.toggle('active');
+            navLinks.classList.toggle('active');
+
+            const expanded = this.classList.contains('active');
+            this.setAttribute('aria-expanded', expanded);
+        });
     </script>
 </body>
 </html>

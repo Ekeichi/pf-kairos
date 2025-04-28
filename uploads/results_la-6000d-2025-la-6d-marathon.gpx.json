@@ -37146,12 +37146,12 @@
   },
   "base_time_s": 13955.373455163251,
   "base_time_formatted": "03:52:35",
-  "elevation_adjustment_s": 3415.3208190806745,
-  "time_with_elevation_s": 17370.694274243928,
+  "elevation_adjustment_s": 3415.3208190806818,
+  "time_with_elevation_s": 17370.694274243935,
   "elevation_adjustment_formatted": "00:56:55",
   "time_with_elevation_formatted": "04:49:30",
-  "weather_adjustment_s": 88.67681861610436,
-  "final_time_s": 17459.371092860034,
-  "weather_adjustment_formatted": "00:01:28",
-  "final_time_formatted": "04:50:59"
+  "weather_adjustment_s": 865.0461246372538,
+  "final_time_s": 18235.74039888119,
+  "weather_adjustment_formatted": "00:14:25",
+  "final_time_formatted": "05:03:55"
 }
