@@ -2,7 +2,7 @@ flask==2.0.1
 gpxpy==1.5.0
 matplotlib==3.5.1
 numpy==1.22.3
-scipy==1.8.0
+scipy>=1.11.3
 requests==2.27.1
 werkzeug==2.0.2
 flask-oauthlib==0.9.6
