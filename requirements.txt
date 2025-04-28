@@ -8,3 +8,4 @@ werkzeug==2.0.2
 flask-oauthlib==0.9.6
 haversine==2.5.1
 reportlab==3.6.9
+gunicorn
