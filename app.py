@@ -60,98 +60,117 @@ def about():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
+    app.logger.info("Début de la route /upload")
     # Vérifier si la requête contient un fichier
     if 'gpx_file' not in request.files:
         flash('Aucun fichier sélectionné')
+        app.logger.error("Aucun fichier GPX dans la requête")
         return redirect(url_for('predict'))
     
     file = request.files['gpx_file']
     if file.filename == '':
         flash('Aucun fichier sélectionné')
+        app.logger.error("Nom de fichier vide")
         return redirect(url_for('predict'))
     
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        app.logger.info(f"Sauvegarde du fichier à : {filepath}")  # Log pour débogage
-        file.save(filepath)
+        app.logger.info(f"Sauvegarde du fichier à : {filepath}")
+        try:
+            file.save(filepath)
+            app.logger.info(f"Fichier sauvegardé avec succès : {filepath}")
+        except Exception as e:
+            flash(f"Erreur lors de la sauvegarde du fichier : {e}")
+            app.logger.error(f"Erreur lors de la sauvegarde du fichier : {e}")
+            return redirect(url_for('predict'))
         
         # Récupérer les records personnels
         records = {}
-        
-        # Option 1: Records personnels saisis manuellement
         if 'enable_custom_records' in request.form:
-            for i in range(7):  # Nous aurons 7 champs de records
+            for i in range(7):
                 distance_key = f'distance_{i}'
                 time_key = f'time_{i}'
-                
                 if distance_key in request.form and time_key in request.form:
                     distance = request.form[distance_key].strip()
                     time = request.form[time_key].strip()
                     if distance and time:
                         records[distance] = time
+        app.logger.info(f"Records personnels : {records}")
         
         # Récupérer les données météo
         use_weather = 'use_weather' in request.form
         weather_data = None
-        
         if use_weather:
             try:
-                # Calculer le centroïde du GPX
                 lat, lon = weather.calculate_centroid(filepath)
                 api_key = os.environ.get('WEATHER_API_KEY', "Uwu4dJD0howwIrgM9BsrrQEaVhlt0KUO")
-                
                 if 'manual_weather' in request.form:
-                    # Saisie manuelle des données météo
                     temp = float(request.form['temperature'])
                     humidity = float(request.form['humidity'])
                     wind_speed = float(request.form['wind_speed'])
                     wind_direction = float(request.form['wind_direction'])
                 else:
-                    # Récupérer les données météo automatiquement
                     temp, humidity, wind_speed, wind_direction = weather.get_weather_data(lat, lon, api_key)
-                
                 weather_data = {
                     "temperature": temp,
                     "humidity": humidity,
                     "wind_speed": wind_speed,
                     "wind_direction": wind_direction
                 }
+                app.logger.info(f"Données météo récupérées : {weather_data}")
             except Exception as e:
                 flash(f"Erreur lors de la récupération des données météo: {e}")
+                app.logger.error(f"Erreur météo : {e}")
                 use_weather = False
         
         # Lancer la prédiction
         try:
+            app.logger.info("Lancement de la prédiction avec web_predictor.main_predictor_web")
             results = web_predictor.main_predictor_web(
                 filepath, 
                 weather_data=weather_data if use_weather else None,
                 personal_records=records if records else None
             )
+            app.logger.info(f"Résultats de la prédiction : {results}")
             
             if "error" in results:
                 flash(results["error"])
+                app.logger.error(f"Erreur dans les résultats : {results['error']}")
                 return redirect(url_for('predict'))
             
             # Générer les données pour Plotly et conserver une image pour le PDF
+            app.logger.info("Génération de l'image et des données JSON avec visualize_results_web")
             img_bytes = io.BytesIO()
             web_predictor.visualize_results_web(results, filepath, save_to=img_bytes)
             img_bytes.seek(0)
             img_base64 = base64.b64encode(img_bytes.getvalue()).decode('utf-8')
+            app.logger.info("Image générée avec succès")
             
-            # Les données JSON pour Plotly sont déjà sauvegardées par visualize_results_web
+            # Vérifier que les fichiers JSON existent
+            results_filename = f"results_{filename}.json"
+            plot_data_filename = f"plot_data_{filename}.json"
+            results_path = os.path.join(app.config['UPLOAD_FOLDER'], results_filename)
+            plot_data_path = os.path.join(app.config['UPLOAD_FOLDER'], plot_data_filename)
+            if not os.path.exists(results_path) or not os.path.exists(plot_data_path):
+                flash("Erreur : Les fichiers de résultats JSON n'ont pas été générés")
+                app.logger.error(f"Fichiers JSON manquants : {results_path}, {plot_data_path}")
+                return redirect(url_for('predict'))
             
+            app.logger.info(f"Fichiers JSON trouvés : {results_path}, {plot_data_path}")
             return render_template('results.html', 
                                results=results, 
                                filename=filename,
-                               img_base64=img_base64,  # Conservé pour la compatibilité 
+                               img_base64=img_base64,
                                weather_data=weather_data)
         except Exception as e:
             flash(f"Erreur lors de la prédiction: {e}")
+            app.logger.error(f"Erreur lors de la prédiction : {e}")
             return redirect(url_for('predict'))
     
     else:
         flash('Format de fichier non autorisé, seuls les fichiers .gpx sont acceptés')
+        app.logger.error("Format de fichier non autorisé")
         return redirect(url_for('predict'))
 
 @app.route('/uploads/<path:filename>')
@@ -165,7 +184,6 @@ def serve_upload(filename):
         return f"Fichier non trouvé: {filename}", 404
     
     app.logger.info(f"Fichier trouvé, envoi de: {file_path}")
-    # Définir le type MIME explicitement pour les fichiers JSON
     mime_type = 'application/json' if file_path.endswith('.json') else None
     return send_file(file_path, mimetype=mime_type)
 
