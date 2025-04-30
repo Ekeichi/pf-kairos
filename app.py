@@ -24,9 +24,9 @@ import weather
 import web_predictor
 
 # Configuration
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
+UPLOAD_FOLDER = '/var/data/uploads'  # Chemin pour le disque persistant sur Render
 ALLOWED_EXTENSIONS = {'gpx'}
-NEWSLETTER_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'newsletter_subscribers.csv')
+NEWSLETTER_FILE = '/var/data/newsletter_subscribers.csv'  # Fichier newsletter dans le disque persistant
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -37,6 +37,7 @@ app.secret_key = "peakflow_secret_key"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Créer le fichier newsletter s'il n'existe pas
+os.makedirs(os.path.dirname(NEWSLETTER_FILE), exist_ok=True)  # Créer le dossier parent si nécessaire
 if not os.path.exists(NEWSLETTER_FILE):
     with open(NEWSLETTER_FILE, 'w', newline='') as f:
         writer = csv.writer(f)
@@ -72,6 +73,7 @@ def upload_file():
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        app.logger.info(f"Sauvegarde du fichier à : {filepath}")  # Log pour débogage
         file.save(filepath)
         
         # Récupérer les records personnels
@@ -88,7 +90,6 @@ def upload_file():
                     time = request.form[time_key].strip()
                     if distance and time:
                         records[distance] = time
-        
         
         # Récupérer les données météo
         use_weather = 'use_weather' in request.form
